@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Mosaic Dashboard",
+  "version": "0.1.0",
+  "description": "Onglets, favoris et notes en vue mosaïque sur la page Nouvel onglet.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["tabs", "bookmarks", "storage"],
+  "icons": {
+    "16": "favicon.svg",
+    "48": "favicon.svg",
+    "128": "favicon.svg"
+  }
+}
