@@ -1,0 +1,53 @@
+import { useEffect, useState, type ReactNode } from 'react';
+import { Check } from 'lucide-react';
+
+type Props = {
+  onConfirm: () => void;
+  idleIcon: ReactNode;
+  idleLabel: string;
+  confirmLabel: string;
+  className?: string;
+  idleClassName?: string;
+  confirmClassName?: string;
+};
+
+export function ConfirmIconButton({
+  onConfirm,
+  idleIcon,
+  idleLabel,
+  confirmLabel,
+  className = '',
+  idleClassName = '',
+  confirmClassName = 'bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-400',
+}: Props) {
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (!confirming) return;
+    const timer = window.setTimeout(() => setConfirming(false), 4000);
+    return () => window.clearTimeout(timer);
+  }, [confirming]);
+
+  const handleClick = () => {
+    if (confirming) {
+      onConfirm();
+      setConfirming(false);
+    } else {
+      setConfirming(true);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      aria-label={confirming ? confirmLabel : idleLabel}
+      title={confirming ? 'Cliquez à nouveau pour confirmer' : undefined}
+      aria-pressed={confirming}
+      onClick={handleClick}
+      onBlur={() => setConfirming(false)}
+      className={`${className} ${confirming ? confirmClassName : idleClassName}`}
+    >
+      {confirming ? <Check size={16} aria-hidden /> : idleIcon}
+    </button>
+  );
+}

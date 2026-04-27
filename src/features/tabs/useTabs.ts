@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { isExtension } from '../../lib/chrome';
 
 export type Tab = {
@@ -9,7 +9,24 @@ export type Tab = {
   windowId: number;
 };
 
-export function useTabs() {
+export type TabsApi = {
+  tabs: Tab[];
+  loading: boolean;
+  activate: (tab: Tab) => void;
+  close: (tab: Tab) => void;
+};
+
+function fromChromeTab(tab: chrome.tabs.Tab & { id: number }): Tab {
+  return {
+    id: tab.id,
+    title: tab.title ?? tab.url ?? '(sans titre)',
+    url: tab.url ?? '',
+    favIconUrl: tab.favIconUrl,
+    windowId: tab.windowId,
+  };
+}
+
+export function useTabs(): TabsApi {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,25 +44,21 @@ export function useTabs() {
       return;
     }
 
-    const refresh = async () => {
+    const refresh = async (): Promise<void> => {
       const all = await chrome.tabs.query({});
       setTabs(
         all
           .filter((t): t is chrome.tabs.Tab & { id: number } => t.id != null)
-          .map((t) => ({
-            id: t.id,
-            title: t.title ?? t.url ?? '(sans titre)',
-            url: t.url ?? '',
-            favIconUrl: t.favIconUrl,
-            windowId: t.windowId,
-          })),
+          .map(fromChromeTab),
       );
       setLoading(false);
     };
 
     void refresh();
 
-    const handler = () => void refresh();
+    const handler = (): void => {
+      void refresh();
+    };
     chrome.tabs.onCreated.addListener(handler);
     chrome.tabs.onRemoved.addListener(handler);
     chrome.tabs.onUpdated.addListener(handler);
@@ -56,16 +69,16 @@ export function useTabs() {
     };
   }, []);
 
-  const activate = (tab: Tab) => {
+  const activate = useCallback((tab: Tab): void => {
     if (!isExtension) return;
     void chrome.tabs.update(tab.id, { active: true });
     void chrome.windows.update(tab.windowId, { focused: true });
-  };
+  }, []);
 
-  const close = (tab: Tab) => {
+  const close = useCallback((tab: Tab): void => {
     if (!isExtension) return;
     void chrome.tabs.remove(tab.id);
-  };
+  }, []);
 
   return { tabs, loading, activate, close };
 }

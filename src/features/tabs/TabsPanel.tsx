@@ -1,76 +1,73 @@
-import { useMemo } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { useTabs, type Tab } from './useTabs';
+import { Columns2, Globe, RectangleHorizontal } from 'lucide-react';
+import type { Tab } from './useTabs';
+import { DraggableTab } from './DraggableTab';
+import type { BlockWidth } from '../../lib/widths';
 
-type TabsPanelProps = { filter: string };
+type TabsPanelProps = {
+  tabs: Tab[];
+  loading: boolean;
+  width: BlockWidth;
+  onToggleWidth: () => void;
+  onActivate: (t: Tab) => void;
+  onClose: (t: Tab) => void;
+};
 
-export function TabsPanel({ filter }: TabsPanelProps) {
-  const { tabs, loading, activate, close } = useTabs();
-
-  const filtered = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return tabs;
-    return tabs.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) || t.url.toLowerCase().includes(q),
-    );
-  }, [tabs, filter]);
+export function TabsPanel({
+  tabs,
+  loading,
+  width,
+  onToggleWidth,
+  onActivate,
+  onClose,
+}: TabsPanelProps) {
+  const ToggleIcon = width === 'full' ? Columns2 : RectangleHorizontal;
+  const toggleLabel =
+    width === 'full'
+      ? 'Mettre les onglets ouverts sur une demi-ligne'
+      : 'Mettre les onglets ouverts sur une ligne complète';
 
   return (
-    <Card
-      title={`Onglets (${filtered.length})`}
-      action={<span className="text-xs text-muted">en direct</span>}
-    >
+    <section className="flex flex-col gap-3" aria-labelledby="tabs-h">
+      <header className="flex items-center gap-3">
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-md">
+          <Globe size={18} aria-hidden />
+        </span>
+        <h2
+          id="tabs-h"
+          className="bg-gradient-to-r from-sky-600 to-cyan-500 bg-clip-text text-xl font-semibold text-transparent dark:from-sky-300 dark:to-cyan-200"
+        >
+          Onglets ouverts
+        </h2>
+        <span className="text-sm text-slate-500 dark:text-slate-400" aria-hidden>
+          {tabs.length}
+        </span>
+        <button
+          type="button"
+          aria-label={toggleLabel}
+          aria-pressed={width === 'half'}
+          onClick={onToggleWidth}
+          className="ml-auto grid h-9 w-9 place-items-center rounded-lg bg-white/70 text-slate-700 backdrop-blur-md transition-colors hover:bg-white focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-500/50 dark:bg-white/10 dark:text-slate-100 dark:hover:bg-white/20"
+        >
+          <ToggleIcon size={16} aria-hidden />
+        </button>
+      </header>
+
       {loading ? (
-        <p className="text-sm text-muted">Chargement…</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted">Aucun onglet ne correspond.</p>
+        <p className="text-sm text-slate-500">Chargement…</p>
+      ) : tabs.length === 0 ? (
+        <p className="text-sm text-slate-500">Aucun onglet ne correspond.</p>
       ) : (
-        <ul className="flex flex-col gap-1">
-          {filtered.map((t) => (
-            <TabRow key={t.id} tab={t} onActivate={activate} onClose={close} />
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3 p-2">
+          {tabs.map((tab) => (
+            <DraggableTab
+              key={tab.id}
+              tab={tab}
+              onActivate={onActivate}
+              onClose={onClose}
+            />
           ))}
         </ul>
       )}
-    </Card>
-  );
-}
-
-function TabRow({
-  tab,
-  onActivate,
-  onClose,
-}: {
-  tab: Tab;
-  onActivate: (t: Tab) => void;
-  onClose: (t: Tab) => void;
-}) {
-  return (
-    <li className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent-bg">
-      <button
-        type="button"
-        onClick={() => onActivate(tab)}
-        className="flex min-w-0 flex-1 items-center gap-2 text-left"
-      >
-        {tab.favIconUrl ? (
-          <img
-            src={tab.favIconUrl}
-            alt=""
-            className="h-4 w-4 flex-shrink-0 rounded"
-          />
-        ) : (
-          <span className="h-4 w-4 flex-shrink-0 rounded bg-border" />
-        )}
-        <span className="truncate text-sm text-ink">{tab.title}</span>
-      </button>
-      <Button
-        aria-label="Fermer l'onglet"
-        onClick={() => onClose(tab)}
-        className="opacity-0 group-hover:opacity-100"
-      >
-        ✕
-      </Button>
-    </li>
+    </section>
   );
 }
