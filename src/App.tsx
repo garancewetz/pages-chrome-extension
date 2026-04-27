@@ -12,7 +12,9 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { GoogleSearch } from './components/GoogleSearch';
 import { SearchBar } from './components/ui/SearchBar';
+import { ThemeToggle } from './components/ui/ThemeToggle';
 import { FavoritesPanel } from './features/favorites/FavoritesPanel';
 import { TabsPanel } from './features/tabs/TabsPanel';
 import { NotesPanel } from './features/notes/NotesPanel';
@@ -71,7 +73,16 @@ function resolveDropPosition(
 ): DropPosition | null {
   if (!target) return null;
   if (target.type === 'favorites-root') {
-    return { parentId: FAVORITES_ROOT_ID, index: api.favoriteItems.length };
+    // Insert after the last individual bookmark (by Chrome index) so folders
+    // stay after all URLs even when Chrome has them interleaved.
+    const rootItems = api.favoriteItems.filter(
+      (b) => b.parentId === FAVORITES_ROOT_ID,
+    );
+    const lastItem = rootItems.at(-1);
+    return {
+      parentId: FAVORITES_ROOT_ID,
+      index: lastItem ? lastItem.index + 1 : 0,
+    };
   }
   if (target.type === 'group') {
     const group = findGroup(api, target.groupId);
@@ -79,17 +90,21 @@ function resolveDropPosition(
   }
   if (target.type === 'bookmark') {
     const { bookmark } = target;
-    const siblings =
-      bookmark.parentId === FAVORITES_ROOT_ID
-        ? api.favoriteItems
-        : (findGroup(api, bookmark.parentId)?.items ?? null);
-    if (siblings) {
-      const idx = siblings.findIndex((b) => b.id === bookmark.id);
-      return { parentId: bookmark.parentId, index: Math.max(idx, 0) };
+    // Use the bookmark's actual Chrome index so the move lands at the correct
+    // position even when folders are interleaved with URLs in Chrome's tree.
+    if (
+      bookmark.parentId === FAVORITES_ROOT_ID ||
+      findGroup(api, bookmark.parentId)
+    ) {
+      return { parentId: bookmark.parentId, index: bookmark.index };
     }
+    const rootItems = api.favoriteItems.filter(
+      (b) => b.parentId === FAVORITES_ROOT_ID,
+    );
+    const lastItem = rootItems.at(-1);
     return {
       parentId: FAVORITES_ROOT_ID,
-      index: api.favoriteItems.length,
+      index: lastItem ? lastItem.index + 1 : 0,
     };
   }
   return null;
@@ -208,22 +223,27 @@ export default function App() {
   }, [activeId, bookmarksApi]);
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-5 px-5 pb-8 pt-3 md:px-8">
+      <header className="flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2.5">
           <Logo />
-          <h1 className="bg-gradient-to-r from-violet-600 via-rose-500 to-sky-500 bg-clip-text text-2xl font-semibold text-transparent dark:from-violet-300 dark:via-rose-300 dark:to-sky-300">
+          <h1 className="font-display text-base font-semibold text-ink-800 dark:text-ink-50 tracking-tight">
             Mosaic
           </h1>
         </div>
-        <div className="md:w-80">
-          <SearchBar
-            value={filter}
-            onChange={setFilter}
-            placeholder="Rechercher dans les favoris et onglets…"
-          />
+        <div className="flex items-center gap-2.5 md:w-auto">
+          <div className="flex-1 md:w-80">
+            <SearchBar
+              value={filter}
+              onChange={setFilter}
+              placeholder="Rechercher dans les favoris et onglets…"
+            />
+          </div>
+          <ThemeToggle />
         </div>
       </header>
+
+      <GoogleSearch />
 
       <DndContext
         sensors={sensors}
@@ -234,7 +254,7 @@ export default function App() {
       >
         <main className="flex flex-col gap-8">
           {!bookmarksApi.loaded ? (
-            <p className="text-base text-slate-500">Chargement…</p>
+            <p className="text-base text-ink-500 dark:text-ink-300">Chargement…</p>
           ) : (
             <>
               <FavoritesPanel
@@ -243,12 +263,13 @@ export default function App() {
                 groupWidths={groupWidths}
                 autoEditId={autoEditId}
                 onAutoEditDone={() => setAutoEditId(null)}
+                onRenameBookmark={bookmarksApi.renameBookmark}
                 onRemoveBookmark={bookmarksApi.removeBookmark}
                 onRenameGroup={bookmarksApi.renameGroup}
                 onRemoveGroup={bookmarksApi.removeGroup}
               />
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div
                   className={
                     tabsWidth === 'half' ? 'md:col-span-1' : 'md:col-span-2'
@@ -292,7 +313,7 @@ export default function App() {
 
 function Logo() {
   return (
-    <svg viewBox="0 0 64 64" className="h-7 w-7 shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 64 64" className="h-5 w-5 shrink-0" aria-hidden="true">
       <defs>
         <linearGradient id="logo-violet" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#8b5cf6" />

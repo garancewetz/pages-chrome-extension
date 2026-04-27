@@ -13,28 +13,28 @@ export function GroupPlaceholder() {
   const isReady = isBookmarkDropTarget(dragType) && !isOver;
 
   const containerClass = isOver
-    ? 'border-violet-500 bg-violet-100/60 text-violet-800 dark:border-violet-300 dark:bg-violet-500/15 dark:text-violet-100'
+    ? 'border-violet-500 bg-violet-100/70 text-violet-800 dark:border-violet-300 dark:bg-violet-500/15 dark:text-violet-100'
     : isReady
-      ? 'border-violet-400/70 bg-violet-50/40 text-violet-700 dark:border-violet-300/40 dark:bg-violet-500/5 dark:text-violet-100'
-      : 'border-slate-300/70 text-slate-500 dark:border-slate-700/70 dark:text-slate-400';
+      ? 'border-violet-400/70 bg-violet-50/50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-500/10 dark:text-violet-100'
+      : 'border-ink-300/70 bg-white/30 text-ink-500 dark:border-ink-700/60 dark:bg-white/[0.03] dark:text-ink-300';
   const iconClass = isOver
-    ? 'bg-violet-500 text-white'
+    ? 'bg-violet-500 text-white shadow-glow-violet'
     : isReady
-      ? 'bg-violet-200/70 text-violet-700 dark:bg-violet-500/20 dark:text-violet-100'
-      : 'bg-slate-200/70 text-slate-600 dark:bg-white/10 dark:text-slate-300';
+      ? 'bg-violet-200/70 text-violet-700 dark:bg-violet-500/25 dark:text-violet-100'
+      : 'bg-white/70 text-ink-600 dark:bg-white/10 dark:text-ink-200';
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[88px] items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 text-center text-base transition-colors ${containerClass}`}
+      className={`flex min-h-[80px] items-center justify-center gap-2.5 rounded-xl border-2 border-dashed px-4 py-3 text-center text-sm font-medium backdrop-blur-md transition-colors ${containerClass}`}
       aria-label={LABEL}
     >
       <span
-        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${iconClass}`}
+        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${iconClass}`}
       >
-        <FolderPlus size={18} aria-hidden />
+        <FolderPlus size={16} aria-hidden />
       </span>
-      <span className="font-medium">{LABEL}</span>
+      <span>{LABEL}</span>
     </div>
   );
 }

@@ -9,6 +9,7 @@ export type Bookmark = {
   title: string;
   url: string;
   parentId: string;
+  index: number;
 };
 
 export type Group = {
@@ -31,6 +32,7 @@ export type BookmarksApi = BookmarkModel & {
     parentId: string,
     input: { title: string; url: string },
   ) => Promise<void>;
+  renameBookmark: (id: string, title: string) => Promise<void>;
   removeBookmark: (id: string) => Promise<void>;
   moveBookmark: (
     id: string,
@@ -59,6 +61,7 @@ function toBookmark(node: chrome.bookmarks.BookmarkTreeNode): Bookmark {
     title: node.title || node.url || '(sans titre)',
     url: node.url ?? '',
     parentId: node.parentId ?? '',
+    index: node.index ?? 0,
   };
 }
 
@@ -196,6 +199,18 @@ export function useBookmarks(): BookmarksApi {
     [],
   );
 
+  const renameBookmark = useCallback(
+    async (id: string, title: string): Promise<void> => {
+      if (!isExtension) return;
+      try {
+        await chrome.bookmarks.update(id, { title });
+      } catch (err) {
+        console.error('[mosaic] renameBookmark failed', { id, title, err });
+      }
+    },
+    [],
+  );
+
   const removeBookmark = useCallback(async (id: string): Promise<void> => {
     if (!isExtension) return;
     try {
@@ -251,6 +266,7 @@ export function useBookmarks(): BookmarksApi {
     renameGroup,
     removeGroup,
     addBookmark,
+    renameBookmark,
     removeBookmark,
     moveBookmark,
   };

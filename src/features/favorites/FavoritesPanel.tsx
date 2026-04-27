@@ -14,6 +14,7 @@ type Props = {
   groupWidths: BlockWidthMap;
   autoEditId: string | null;
   onAutoEditDone: () => void;
+  onRenameBookmark: (id: string, title: string) => void;
   onRemoveBookmark: (id: string) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
@@ -25,6 +26,7 @@ export function FavoritesPanel({
   groupWidths,
   autoEditId,
   onAutoEditDone,
+  onRenameBookmark,
   onRemoveBookmark,
   onRenameGroup,
   onRemoveGroup,
@@ -43,35 +45,27 @@ export function FavoritesPanel({
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-3xl border-2 border-violet-200/70 bg-gradient-to-br from-violet-50/80 via-white/40 to-rose-50/60 p-5 shadow-lg shadow-violet-500/5 dark:border-violet-500/30 dark:from-violet-500/10 dark:via-transparent dark:to-rose-500/10"
+      className="flex flex-col gap-4 rounded-2xl glass p-4"
       aria-labelledby="fav-h"
     >
-      <header className="flex flex-col gap-1">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-rose-500 text-white shadow-md">
-            <Star size={20} aria-hidden />
-          </span>
-          <h2
-            id="fav-h"
-            className="bg-gradient-to-r from-violet-600 to-rose-500 bg-clip-text text-2xl font-semibold text-transparent dark:from-violet-300 dark:to-rose-300"
-          >
-            Mes favoris
-          </h2>
-          <span
-            className="text-base text-slate-500 dark:text-slate-400"
-            aria-hidden
-          >
-            {items.length}
-          </span>
-        </div>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
-          Vos pages préférées, accessibles en un clic. Glissez un onglet ou un
-          favori ici pour l'ajouter, ou créez un groupe pour les organiser.
-        </p>
+      <header className="flex items-center gap-2">
+        <Star size={15} className="shrink-0 text-ink-400 dark:text-ink-500" aria-hidden />
+        <h2
+          id="fav-h"
+          className="font-display text-base font-semibold text-ink-700 dark:text-ink-100"
+        >
+          Mes favoris
+        </h2>
+        <span
+          className="ml-0.5 text-sm text-ink-400 dark:text-ink-300"
+          aria-hidden
+        >
+          {items.length}
+        </span>
       </header>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-violet-700/80 dark:text-violet-200/80">
+      <div className="relative flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-ink-500 dark:text-ink-300">
           Favoris directs
         </h3>
         <SortableContext
@@ -80,11 +74,11 @@ export function FavoritesPanel({
         >
           <ul
             ref={setNodeRef}
-            className={`grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-3 rounded-2xl border-2 p-3 transition-colors ${dropClass}`}
+            className={`grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2.5 rounded-xl border-2 p-2.5 transition-colors ${dropClass}`}
             aria-label="Favoris directs"
           >
             {items.length === 0 ? (
-              <li className="col-span-full grid place-items-center rounded-xl border-2 border-dashed border-violet-300/60 p-6 text-center text-base text-slate-600 dark:border-violet-400/30 dark:text-slate-300">
+              <li className="col-span-full grid place-items-center rounded-lg border border-dashed border-ink-200 bg-white/20 p-6 text-center text-sm text-ink-500 dark:border-ink-700/50 dark:bg-white/[0.02] dark:text-ink-300">
                 Glissez ici un onglet ouvert ou un favori pour l'ajouter.
               </li>
             ) : (
@@ -92,6 +86,7 @@ export function FavoritesPanel({
                 <BookmarkTile
                   key={b.id}
                   bookmark={b}
+                  onRename={onRenameBookmark}
                   onRemove={onRemoveBookmark}
                 />
               ))
@@ -100,11 +95,11 @@ export function FavoritesPanel({
         </SortableContext>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-violet-700/80 dark:text-violet-200/80">
+      <div className="relative flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-ink-500 dark:text-ink-300">
           Groupes ({groups.length})
         </h3>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
           {groups.map((g) => {
             const w = groupWidths.getWidth(g.id);
             return (
@@ -118,6 +113,7 @@ export function FavoritesPanel({
                   onToggleWidth={() => groupWidths.toggle(g.id)}
                   autoEdit={autoEditId === g.id}
                   onAutoEditDone={onAutoEditDone}
+                  onRenameBookmark={onRenameBookmark}
                   onRemoveBookmark={onRemoveBookmark}
                   onRenameGroup={onRenameGroup}
                   onRemoveGroup={onRemoveGroup}
