@@ -15,6 +15,8 @@ export type Bookmark = {
 export type Group = {
   id: string;
   name: string;
+  parentId: string;
+  index: number;
   items: Bookmark[];
 };
 
@@ -28,6 +30,7 @@ export type BookmarksApi = BookmarkModel & {
   addGroup: (name: string) => Promise<string | undefined>;
   renameGroup: (id: string, name: string) => Promise<void>;
   removeGroup: (id: string) => Promise<void>;
+  moveGroup: (id: string, direction: 'up' | 'down') => Promise<void>;
   addBookmark: (
     parentId: string,
     input: { title: string; url: string },
@@ -88,7 +91,13 @@ function buildModel(tree: chrome.bookmarks.BookmarkTreeNode[]): BookmarkModel {
     } else {
       const items: Bookmark[] = [];
       collectUrls(child.children, items);
-      groups.push({ id: child.id, name: child.title, items });
+      groups.push({
+        id: child.id,
+        name: child.title,
+        parentId: child.parentId ?? '',
+        index: child.index ?? 0,
+        items,
+      });
     }
   }
 
@@ -98,7 +107,13 @@ function buildModel(tree: chrome.bookmarks.BookmarkTreeNode[]): BookmarkModel {
     } else {
       const items: Bookmark[] = [];
       collectUrls(child.children, items);
-      groups.push({ id: child.id, name: child.title, items });
+      groups.push({
+        id: child.id,
+        name: child.title,
+        parentId: child.parentId ?? '',
+        index: child.index ?? 0,
+        items,
+      });
     }
   }
 
@@ -179,6 +194,42 @@ export function useBookmarks(): BookmarksApi {
       console.error('[mosaic] removeGroup failed', { id, err });
     }
   }, []);
+
+  const moveGroup = useCallback(
+    async (id: string, direction: 'up' | 'down'): Promise<void> => {
+      if (!isExtension) return;
+      const idx = groups.findIndex((g) => g.id === id);
+      if (idx === -1) return;
+      const neighborIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (neighborIdx < 0 || neighborIdx >= groups.length) return;
+      const current = groups[idx];
+      const neighbor = groups[neighborIdx];
+
+      const sameParent = current.parentId === neighbor.parentId;
+      const targetParentId = sameParent ? current.parentId : neighbor.parentId;
+      const baseIndex = sameParent
+        ? neighbor.index
+        : direction === 'up'
+          ? neighbor.index
+          : neighbor.index + 1;
+
+      // chrome.bookmarks.move retire l'élément avant l'insertion : pour un
+      // déplacement dans le même dossier vers un index plus grand, Chrome
+      // décrémente l'index passé. On compense ici.
+      const adjustedIndex =
+        sameParent && baseIndex > current.index ? baseIndex + 1 : baseIndex;
+
+      try {
+        await chrome.bookmarks.move(id, {
+          parentId: targetParentId,
+          index: adjustedIndex,
+        });
+      } catch (err) {
+        console.error('[mosaic] moveGroup failed', { id, direction, err });
+      }
+    },
+    [groups],
+  );
 
   const addBookmark = useCallback(
     async (
@@ -265,6 +316,7 @@ export function useBookmarks(): BookmarksApi {
     addGroup,
     renameGroup,
     removeGroup,
+    moveGroup,
     addBookmark,
     renameBookmark,
     removeBookmark,

@@ -1,5 +1,6 @@
 import { Columns2, RectangleHorizontal, StickyNote } from 'lucide-react';
 import { useNotes } from './useNotes';
+import { IconButton } from '../../components/ui/IconButton';
 import type { BlockWidth } from '../../lib/widths';
 
 type Props = {
@@ -17,7 +18,7 @@ export function NotesPanel({ width, onToggleWidth }: Props) {
       : 'Mettre la note rapide sur une ligne complète';
 
   return (
-    <section className="flex flex-col rounded-2xl glass p-4">
+    <section className="flex flex-col">
       <header className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2">
           <StickyNote size={15} className="shrink-0 text-ink-400 dark:text-ink-500" aria-hidden />
@@ -29,15 +30,14 @@ export function NotesPanel({ width, onToggleWidth }: Props) {
           <span className="text-sm text-ink-400 dark:text-ink-300">
             {loaded ? 'enregistré' : '…'}
           </span>
-          <button
-            type="button"
-            aria-label={toggleLabel}
+          <IconButton
+            variant="square"
+            label={toggleLabel}
+            tooltip={width === 'full' ? 'Demi-ligne' : 'Pleine largeur'}
             aria-pressed={width === 'half'}
             onClick={onToggleWidth}
-            className="grid h-8 w-8 place-items-center rounded-md border-2 border-ink-200 bg-white text-ink-500 transition-colors hover:border-violet-400 hover:text-ink-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-300 dark:hover:border-violet-300 dark:hover:text-ink-50"
-          >
-            <ToggleIcon size={16} aria-hidden />
-          </button>
+            icon={<ToggleIcon size={16} aria-hidden />}
+          />
         </span>
       </header>
       <div className="relative min-h-0 flex-1">

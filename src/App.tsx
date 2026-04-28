@@ -267,6 +267,8 @@ export default function App() {
                 onRemoveBookmark={bookmarksApi.removeBookmark}
                 onRenameGroup={bookmarksApi.renameGroup}
                 onRemoveGroup={bookmarksApi.removeGroup}
+                onMoveGroup={bookmarksApi.moveGroup}
+                reorderEnabled={!filter.trim()}
               />
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

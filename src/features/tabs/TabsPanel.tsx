@@ -1,6 +1,7 @@
 import { Columns2, Globe, RectangleHorizontal } from 'lucide-react';
 import type { Tab } from './useTabs';
 import { DraggableTab } from './DraggableTab';
+import { IconButton } from '../../components/ui/IconButton';
 import type { BlockWidth } from '../../lib/widths';
 
 type TabsPanelProps = {
@@ -28,7 +29,7 @@ export function TabsPanel({
 
   return (
     <section
-      className="flex flex-col gap-3 rounded-2xl glass p-4"
+      className="flex flex-col gap-3"
       aria-labelledby="tabs-h"
     >
       <header className="flex items-center gap-2">
@@ -45,15 +46,17 @@ export function TabsPanel({
         >
           {tabs.length}
         </span>
-        <button
-          type="button"
-          aria-label={toggleLabel}
-          aria-pressed={width === 'half'}
-          onClick={onToggleWidth}
-          className="ml-auto grid h-8 w-8 place-items-center rounded-md border-2 border-ink-200 bg-white text-ink-500 transition-colors hover:border-violet-400 hover:text-ink-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-300 dark:hover:border-violet-300 dark:hover:text-ink-50"
-        >
-          <ToggleIcon size={16} aria-hidden />
-        </button>
+        <span className="ml-auto">
+          <IconButton
+            variant="square"
+            label={toggleLabel}
+            tooltip={width === 'full' ? 'Demi-ligne' : 'Pleine largeur'}
+            tooltipSide="bottom"
+            aria-pressed={width === 'half'}
+            onClick={onToggleWidth}
+            icon={<ToggleIcon size={16} aria-hidden />}
+          />
+        </span>
       </header>
 
       {loading ? (

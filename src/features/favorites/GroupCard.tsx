@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import {
+  ChevronDown,
+  ChevronUp,
   Columns2,
   FolderHeart,
   Pencil,
@@ -10,6 +12,8 @@ import {
 } from 'lucide-react';
 import { BookmarkTile } from './BookmarkTile';
 import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
+import { IconButton } from '../../components/ui/IconButton';
+import { Tooltip } from '../../components/ui/Tooltip';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
 import type { Group } from './useBookmarks';
 import type { BlockWidth } from '../../lib/widths';
@@ -24,6 +28,9 @@ type Props = {
   onRemoveBookmark: (id: string) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
+  onMoveGroup?: (id: string, direction: 'up' | 'down') => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 };
 
 export function GroupCard({
@@ -36,6 +43,9 @@ export function GroupCard({
   onRemoveBookmark,
   onRenameGroup,
   onRemoveGroup,
+  onMoveGroup,
+  canMoveUp,
+  canMoveDown,
 }: Props) {
   const [name, setName] = useState(group.name);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +87,7 @@ export function GroupCard({
     }
   };
 
-  const ToggleIcon = width === 'full' ? Columns2 : RectangleHorizontal;
+  const ToggleIcon = width === 'full' ? RectangleHorizontal : Columns2;
   const toggleLabel =
     width === 'full'
       ? `Mettre « ${group.name} » sur une demi-ligne`
@@ -108,34 +118,56 @@ export function GroupCard({
             aria-label="Nom du groupe"
             className="min-w-0 flex-1 rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-base font-semibold text-ink-800 transition-colors hover:bg-ink-500/5 focus:border-ink-300/60 focus:bg-white/70 focus:outline-none dark:text-ink-100 dark:hover:bg-white/5 dark:focus:bg-white/10"
           />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.focus()}
-            aria-label={`Renommer le groupe ${group.name}`}
-            className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-ink-400 opacity-60 transition-all hover:bg-violet-50 hover:text-violet-700 group-hover/title:opacity-100 group-focus-within/title:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-400 dark:hover:bg-violet-500/20 dark:hover:text-violet-200"
-          >
-            <Pencil size={12} aria-hidden />
-          </button>
+          <Tooltip label="Renommer">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.focus()}
+              aria-label={`Renommer le groupe ${group.name}`}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-ink-400 opacity-60 transition-all hover:bg-violet-50 hover:text-violet-700 group-hover/title:opacity-100 group-focus-within/title:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-400 dark:hover:bg-violet-500/20 dark:hover:text-violet-200"
+            >
+              <Pencil size={12} aria-hidden />
+            </button>
+          </Tooltip>
           <span className="shrink-0 text-sm text-ink-400 dark:text-ink-300">
             {group.items.length}
           </span>
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            aria-label={toggleLabel}
-            aria-pressed={width === 'full'}
+          {onMoveGroup ? (
+            <>
+              <IconButton
+                variant="bare"
+                label={`Déplacer le groupe ${group.name} vers le haut`}
+                tooltip="Monter"
+                onClick={() => onMoveGroup(group.id, 'up')}
+                disabled={!canMoveUp}
+                icon={<ChevronUp size={16} aria-hidden />}
+              />
+              <IconButton
+                variant="bare"
+                label={`Déplacer le groupe ${group.name} vers le bas`}
+                tooltip="Descendre"
+                onClick={() => onMoveGroup(group.id, 'down')}
+                disabled={!canMoveDown}
+                icon={<ChevronDown size={16} aria-hidden />}
+              />
+            </>
+          ) : null}
+          <IconButton
+            variant="bare"
+            label={toggleLabel}
+            tooltip={width === 'full' ? 'Demi-ligne' : 'Pleine largeur'}
+            aria-pressed={width === 'half'}
             onClick={onToggleWidth}
-            className="grid h-8 w-8 place-items-center rounded-md text-ink-400 transition-colors hover:bg-ink-100/70 hover:text-ink-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-300 dark:hover:bg-white/10 dark:hover:text-ink-50"
-          >
-            <ToggleIcon size={16} aria-hidden />
-          </button>
+            icon={<ToggleIcon size={16} aria-hidden />}
+          />
           <ConfirmIconButton
             onConfirm={() => onRemoveGroup(group.id)}
             idleIcon={<Trash2 size={16} aria-hidden />}
             idleLabel={`Supprimer le groupe ${group.name}`}
             confirmLabel={`Confirmer la suppression du groupe ${group.name}`}
+            tooltip="Supprimer"
             className="grid h-8 w-8 place-items-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
             idleClassName="text-ink-400 hover:bg-rose-50 hover:text-rose-600 dark:text-ink-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-200"
           />

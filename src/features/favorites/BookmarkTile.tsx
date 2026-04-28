@@ -5,9 +5,10 @@ import {
   Bookmark as BookmarkIcon,
   GripVertical,
   Pencil,
-  X,
+  Trash2,
 } from 'lucide-react';
 import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
+import { Tooltip } from '../../components/ui/Tooltip';
 import { isExtension } from '../../lib/chrome';
 import { getFavicon, getHostname } from '../../lib/url';
 import type { Bookmark } from './useBookmarks';
@@ -32,8 +33,11 @@ const tileBase =
 const tileHover =
   'transition-[background-color,border-color] duration-150 ease-out hover:border-violet-400 hover:bg-white dark:hover:border-violet-300 dark:hover:bg-ink-800';
 
-const buttonBase =
-  'absolute z-10 grid h-7 w-7 place-items-center rounded-md border border-ink-200 bg-white text-ink-600 transition-colors duration-150 dark:border-ink-700 dark:bg-ink-700 dark:text-ink-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 opacity-60 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100';
+const buttonWrapper =
+  'absolute z-10 h-7 w-7 rounded-md border border-ink-200 bg-white text-ink-600 transition-colors duration-150 dark:border-ink-700 dark:bg-ink-700 dark:text-ink-100 opacity-60 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100';
+
+const buttonInner =
+  'grid h-full w-full place-items-center rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40';
 
 export function BookmarkTile({ bookmark, onRename, onRemove }: Props) {
   const favicon = getFavicon(bookmark.url);
@@ -144,35 +148,45 @@ export function BookmarkTile({ bookmark, onRename, onRemove }: Props) {
       </div>
 
       {!editing && (
-        <button
-          type="button"
-          aria-label={`Déplacer ${bookmark.title}`}
-          {...attributes}
-          {...listeners}
-          className={`${buttonBase} left-1 top-1 touch-none cursor-grab hover:bg-white dark:hover:bg-ink-700`}
-        >
-          <GripVertical size={13} aria-hidden />
-        </button>
+        <Tooltip label="Déplacer" className={`${buttonWrapper} left-1 top-1 inline-flex`}>
+          <button
+            type="button"
+            aria-label={`Déplacer ${bookmark.title}`}
+            {...attributes}
+            {...listeners}
+            className={`${buttonInner} touch-none cursor-grab hover:bg-white dark:hover:bg-ink-700`}
+          >
+            <GripVertical size={13} aria-hidden />
+          </button>
+        </Tooltip>
       )}
 
       {!editing && (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          aria-label={`Renommer ${bookmark.title}`}
-          className={`${buttonBase} bottom-1 right-1 hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
+        <Tooltip
+          label="Renommer"
+          side="top"
+          className={`${buttonWrapper} bottom-1 right-1 inline-flex`}
         >
-          <Pencil size={13} aria-hidden />
-        </button>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label={`Renommer ${bookmark.title}`}
+            className={`${buttonInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
+          >
+            <Pencil size={13} aria-hidden />
+          </button>
+        </Tooltip>
       )}
 
       {!editing && (
         <ConfirmIconButton
           onConfirm={() => onRemove(bookmark.id)}
-          idleIcon={<X size={13} aria-hidden />}
-          idleLabel={`Retirer ${bookmark.title}`}
+          idleIcon={<Trash2 size={13} aria-hidden />}
+          idleLabel={`Supprimer ${bookmark.title}`}
           confirmLabel={`Confirmer la suppression de ${bookmark.title}`}
-          className={`${buttonBase} right-1 top-1`}
+          tooltip="Supprimer"
+          wrapperClassName={`${buttonWrapper} right-1 top-1 inline-flex`}
+          className={buttonInner}
           idleClassName="hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-200"
         />
       )}

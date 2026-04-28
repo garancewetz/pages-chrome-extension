@@ -18,6 +18,8 @@ type Props = {
   onRemoveBookmark: (id: string) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
+  onMoveGroup: (id: string, direction: 'up' | 'down') => void;
+  reorderEnabled: boolean;
 };
 
 export function FavoritesPanel({
@@ -30,6 +32,8 @@ export function FavoritesPanel({
   onRemoveBookmark,
   onRenameGroup,
   onRemoveGroup,
+  onMoveGroup,
+  reorderEnabled,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'favorites-root',
@@ -45,7 +49,7 @@ export function FavoritesPanel({
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-2xl glass p-4"
+      className="flex flex-col gap-4"
       aria-labelledby="fav-h"
     >
       <header className="flex items-center gap-2">
@@ -100,7 +104,7 @@ export function FavoritesPanel({
           Groupes ({groups.length})
         </h3>
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-          {groups.map((g) => {
+          {groups.map((g, i) => {
             const w = groupWidths.getWidth(g.id);
             return (
               <div
@@ -117,6 +121,9 @@ export function FavoritesPanel({
                   onRemoveBookmark={onRemoveBookmark}
                   onRenameGroup={onRenameGroup}
                   onRemoveGroup={onRemoveGroup}
+                  onMoveGroup={reorderEnabled ? onMoveGroup : undefined}
+                  canMoveUp={reorderEnabled && i > 0}
+                  canMoveDown={reorderEnabled && i < groups.length - 1}
                 />
               </div>
             );

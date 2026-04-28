@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Check } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 
 type Props = {
   onConfirm: () => void;
@@ -9,6 +10,9 @@ type Props = {
   className?: string;
   idleClassName?: string;
   confirmClassName?: string;
+  tooltip?: string;
+  tooltipSide?: 'top' | 'bottom';
+  wrapperClassName?: string;
 };
 
 export function ConfirmIconButton({
@@ -19,6 +23,9 @@ export function ConfirmIconButton({
   className = '',
   idleClassName = '',
   confirmClassName = 'bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-400',
+  tooltip,
+  tooltipSide,
+  wrapperClassName,
 }: Props) {
   const [confirming, setConfirming] = useState(false);
 
@@ -37,7 +44,7 @@ export function ConfirmIconButton({
     }
   };
 
-  return (
+  const button = (
     <button
       type="button"
       aria-label={confirming ? confirmLabel : idleLabel}
@@ -49,5 +56,15 @@ export function ConfirmIconButton({
     >
       {confirming ? <Check size={16} aria-hidden /> : idleIcon}
     </button>
+  );
+
+  if (!tooltip || confirming) {
+    if (!wrapperClassName) return button;
+    return <span className={wrapperClassName}>{button}</span>;
+  }
+  return (
+    <Tooltip label={tooltip} side={tooltipSide} className={wrapperClassName}>
+      {button}
+    </Tooltip>
   );
 }
