@@ -29,6 +29,7 @@ import {
   type Group,
 } from './features/favorites/useBookmarks';
 import { useBlockWidth, useBlockWidthMap } from './lib/widths';
+import { useGroupColorMap } from './lib/groupColors';
 
 type DragSource =
   | { type: 'tab'; tab: Tab }
@@ -125,6 +126,7 @@ export default function App() {
     'full',
   );
   const groupWidths = useBlockWidthMap('mosaic.groupWidths', 'half');
+  const groupColors = useGroupColorMap('mosaic.groupColors');
 
   const filteredTabs = useMemo(() => {
     const matches = buildMatcher(filter);
@@ -261,6 +263,7 @@ export default function App() {
                 items={filteredFavoriteItems}
                 groups={filteredGroups}
                 groupWidths={groupWidths}
+                groupColors={groupColors}
                 autoEditId={autoEditId}
                 onAutoEditDone={() => setAutoEditId(null)}
                 onRenameBookmark={bookmarksApi.renameBookmark}

@@ -5,16 +5,17 @@ import {
   ChevronDown,
   ChevronUp,
   Columns2,
-  FolderHeart,
   Pencil,
   RectangleHorizontal,
   Trash2,
 } from 'lucide-react';
 import { BookmarkTile } from './BookmarkTile';
+import { GroupColorPicker } from './GroupColorPicker';
 import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
 import { IconButton } from '../../components/ui/IconButton';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
+import { getColor, type GroupColorId } from '../../lib/groupColors';
 import type { Group } from './useBookmarks';
 import type { BlockWidth } from '../../lib/widths';
 
@@ -31,6 +32,8 @@ type Props = {
   onMoveGroup?: (id: string, direction: 'up' | 'down') => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  colorId: GroupColorId;
+  onChangeColor: (id: string, color: GroupColorId) => void;
 };
 
 export function GroupCard({
@@ -46,7 +49,10 @@ export function GroupCard({
   onMoveGroup,
   canMoveUp,
   canMoveDown,
+  colorId,
+  onChangeColor,
 }: Props) {
+  const color = getColor(colorId);
   const [name, setName] = useState(group.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -95,12 +101,17 @@ export function GroupCard({
 
   return (
     <section
-      className="flex flex-col gap-2.5 rounded-xl border-2 border-ink-200 bg-white/75 p-3 dark:border-ink-700 dark:bg-ink-800/60"
+      className="group/card flex flex-col gap-2.5 rounded-xl border border-l-4 border-ink-200 bg-white/75 p-3 dark:border-ink-700 dark:bg-ink-800/60"
+      style={{ borderLeftColor: color.dot }}
       aria-label={`Groupe ${group.name}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="group/title flex min-w-0 flex-1 items-center gap-2">
-          <FolderHeart size={14} className="shrink-0 text-ink-400 dark:text-ink-500" aria-hidden />
+          <GroupColorPicker
+            current={colorId}
+            groupName={group.name}
+            onChange={(id) => onChangeColor(group.id, id)}
+          />
           <input
             ref={inputRef}
             value={name}
@@ -133,7 +144,7 @@ export function GroupCard({
           </span>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/card:opacity-100 focus-within:opacity-100">
           {onMoveGroup ? (
             <>
               <IconButton

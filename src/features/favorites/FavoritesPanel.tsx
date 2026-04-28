@@ -7,11 +7,13 @@ import { GroupPlaceholder } from './GroupPlaceholder';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
 import type { Bookmark, Group } from './useBookmarks';
 import type { BlockWidthMap } from '../../lib/widths';
+import type { GroupColorMap } from '../../lib/groupColors';
 
 type Props = {
   items: Bookmark[];
   groups: Group[];
   groupWidths: BlockWidthMap;
+  groupColors: GroupColorMap;
   autoEditId: string | null;
   onAutoEditDone: () => void;
   onRenameBookmark: (id: string, title: string) => void;
@@ -26,6 +28,7 @@ export function FavoritesPanel({
   items,
   groups,
   groupWidths,
+  groupColors,
   autoEditId,
   onAutoEditDone,
   onRenameBookmark,
@@ -124,6 +127,8 @@ export function FavoritesPanel({
                   onMoveGroup={reorderEnabled ? onMoveGroup : undefined}
                   canMoveUp={reorderEnabled && i > 0}
                   canMoveDown={reorderEnabled && i < groups.length - 1}
+                  colorId={groupColors.getColorId(g.id, i)}
+                  onChangeColor={groupColors.setColorId}
                 />
               </div>
             );
