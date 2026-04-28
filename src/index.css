@@ -21,67 +21,14 @@ body {
 
 body {
   position: relative;
-  background: #f7f6fb;
+  background: #fafaff;
   color: #1d2138;
   overflow-x: hidden;
 }
 
 html.dark body {
-  background: #07080f;
+  background: #0a0b1a;
   color: #e8eaf4;
-}
-
-/* Dégradé de fond — statique, très doux */
-body::before {
-  content: '';
-  position: fixed;
-  inset: -20vmax;
-  z-index: -1;
-  background:
-    radial-gradient(
-      60vmax 60vmax at 20% 10%,
-      rgba(167, 139, 250, 0.12),
-      transparent 65%
-    ),
-    radial-gradient(
-      55vmax 55vmax at 80% 90%,
-      rgba(56, 189, 248, 0.1),
-      transparent 65%
-    ),
-    linear-gradient(160deg, #faf9ff 0%, #fefefe 50%, #f5f8ff 100%);
-  filter: blur(60px);
-  pointer-events: none;
-}
-
-html.dark body::before {
-  background:
-    radial-gradient(
-      60vmax 60vmax at 20% 10%,
-      rgba(109, 40, 217, 0.18),
-      transparent 65%
-    ),
-    radial-gradient(
-      55vmax 55vmax at 80% 90%,
-      rgba(2, 132, 199, 0.15),
-      transparent 65%
-    ),
-    linear-gradient(160deg, #08081a 0%, #0a0a18 50%, #060a18 100%);
-  filter: blur(70px);
-}
-
-/* Grain subtil pour donner de la matière */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-html.dark body::after {
-  opacity: 0.06;
 }
 
 /* Sélection */

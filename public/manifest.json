@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Mosaic Dashboard",
+  "name": "Mosaïque",
   "version": "0.1.0",
   "description": "Onglets, favoris et notes en vue mosaïque sur la page Nouvel onglet.",
   "chrome_url_overrides": {

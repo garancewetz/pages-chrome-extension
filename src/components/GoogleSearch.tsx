@@ -58,12 +58,7 @@ export function GoogleSearch() {
       <label htmlFor="google-search-input" className="sr-only">
         Rechercher sur Google
       </label>
-      <div className="group relative">
-        {/* Halo de couleur sous l'input */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-2 rounded-full bg-gradient-to-r from-violet-400/40 via-rose-400/30 to-sky-400/40 opacity-60 blur-2xl transition-opacity duration-500 group-focus-within:opacity-90 dark:from-violet-500/30 dark:via-rose-500/25 dark:to-sky-500/30"
-        />
+      <div className="relative">
         <GoogleG className="pointer-events-none absolute left-6 top-1/2 z-10 h-7 w-7 -translate-y-1/2" />
         <input
           id="google-search-input"
@@ -76,7 +71,7 @@ export function GoogleSearch() {
         <button
           type="submit"
           aria-label="Lancer la recherche"
-          className="absolute right-2.5 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-rose-500 text-white shadow-glow-violet transition hover:scale-105 hover:shadow-lg focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-500/40"
+          className="absolute right-2.5 top-1/2 z-10 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-violet-500 text-white transition-colors hover:bg-violet-600 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-500/40 dark:bg-violet-500 dark:hover:bg-violet-400"
         >
           <SearchIcon className="h-6 w-6" />
         </button>

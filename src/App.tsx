@@ -230,7 +230,7 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <Logo />
           <h1 className="font-display text-base font-semibold text-ink-800 dark:text-ink-50 tracking-tight">
-            Mosaic
+            Mosaïque
           </h1>
         </div>
         <div className="flex items-center gap-2.5 md:w-auto">
@@ -319,23 +319,9 @@ export default function App() {
 function Logo() {
   return (
     <svg viewBox="0 0 64 64" className="h-5 w-5 shrink-0" aria-hidden="true">
-      <defs>
-        <linearGradient id="logo-violet" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#8b5cf6" />
-          <stop offset="100%" stopColor="#7c3aed" />
-        </linearGradient>
-        <linearGradient id="logo-rose" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fb7185" />
-          <stop offset="100%" stopColor="#f43f5e" />
-        </linearGradient>
-        <linearGradient id="logo-sky" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#0ea5e9" />
-        </linearGradient>
-      </defs>
-      <rect x="4" y="4" width="32" height="56" rx="8" fill="url(#logo-violet)" />
-      <rect x="40" y="4" width="20" height="26" rx="6" fill="url(#logo-rose)" />
-      <rect x="40" y="34" width="20" height="26" rx="6" fill="url(#logo-sky)" />
+      <rect x="4" y="4" width="32" height="56" rx="8" fill="#9582d0" />
+      <rect x="40" y="4" width="20" height="26" rx="6" fill="#d6839a" />
+      <rect x="40" y="34" width="20" height="26" rx="6" fill="#5fadd0" />
     </svg>
   );
 }
