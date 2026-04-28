@@ -4,6 +4,9 @@ import { Star } from 'lucide-react';
 import { BookmarkTile } from './BookmarkTile';
 import { GroupCard } from './GroupCard';
 import { GroupPlaceholder } from './GroupPlaceholder';
+import { EmptyDropZone } from '../../components/ui/EmptyDropZone';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { SubsectionTitle } from '../../components/ui/SubsectionTitle';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
 import type { Bookmark, Group } from './useBookmarks';
 import type { BlockWidthMap } from '../../lib/widths';
@@ -55,26 +58,16 @@ export function FavoritesPanel({
       className="flex flex-col gap-4"
       aria-labelledby="fav-h"
     >
-      <header className="flex items-center gap-2">
-        <Star size={15} className="shrink-0 text-ink-400 dark:text-ink-500" aria-hidden />
-        <h2
-          id="fav-h"
-          className="font-display text-base font-semibold text-ink-700 dark:text-ink-100"
-        >
-          Mes favoris
-        </h2>
-        <span
-          className="ml-0.5 text-sm text-ink-400 dark:text-ink-300"
-          aria-hidden
-        >
-          {items.length}
-        </span>
-      </header>
+      <SectionHeader
+        id="fav-h"
+        icon={Star}
+        title="Mes favoris"
+        count={items.length}
+        accent="violet"
+      />
 
       <div className="relative flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-ink-500 dark:text-ink-300">
-          Favoris directs
-        </h3>
+        <SubsectionTitle>Favoris directs</SubsectionTitle>
         <SortableContext
           items={items.map((b) => b.id)}
           strategy={rectSortingStrategy}
@@ -85,9 +78,9 @@ export function FavoritesPanel({
             aria-label="Favoris directs"
           >
             {items.length === 0 ? (
-              <li className="col-span-full grid place-items-center rounded-lg border border-dashed border-ink-200 bg-white/20 p-6 text-center text-sm text-ink-500 dark:border-ink-700/50 dark:bg-white/[0.02] dark:text-ink-300">
+              <EmptyDropZone>
                 Glissez ici un onglet ouvert ou un favori pour l'ajouter.
-              </li>
+              </EmptyDropZone>
             ) : (
               items.map((b) => (
                 <BookmarkTile
@@ -103,9 +96,7 @@ export function FavoritesPanel({
       </div>
 
       <div className="relative flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-ink-500 dark:text-ink-300">
-          Groupes ({groups.length})
-        </h3>
+        <SubsectionTitle>Groupes ({groups.length})</SubsectionTitle>
         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
           {groups.map((g, i) => {
             const w = groupWidths.getWidth(g.id);

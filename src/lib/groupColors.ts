@@ -17,15 +17,15 @@ export type GroupColor = {
 
 // Palette ancrée sur les couleurs de marque (violet, rose, sky, amber de
 // tailwind.config) + 3 harmoniques (corail, sauge, mauve) pour étaler la roue.
-// Saturation ~50 %, lightness ~63 % — vif sans être criard.
+// Saturation ~65 %, lightness ~60 % — vif et chaleureux, sans être criard.
 export const GROUP_COLORS: GroupColor[] = [
-  { id: 'indigo', label: 'Corail', dot: '#d6896d' },
-  { id: 'amber', label: 'Ambre', dot: '#d6a558' },
-  { id: 'emerald', label: 'Sauge', dot: '#7eb593' },
-  { id: 'sky', label: 'Bleu', dot: '#5fadd0' },
-  { id: 'violet', label: 'Lavande', dot: '#9582d0' },
-  { id: 'fuchsia', label: 'Mauve', dot: '#cf8bbf' },
-  { id: 'rose', label: 'Rose', dot: '#d6839a' },
+  { id: 'indigo', label: 'Corail', dot: '#e07a55' },
+  { id: 'amber', label: 'Ambre', dot: '#e0a93d' },
+  { id: 'emerald', label: 'Sauge', dot: '#5fbb86' },
+  { id: 'sky', label: 'Bleu', dot: '#3fa8d6' },
+  { id: 'violet', label: 'Lavande', dot: '#876fd9' },
+  { id: 'fuchsia', label: 'Mauve', dot: '#d679c2' },
+  { id: 'rose', label: 'Rose', dot: '#db6c8d' },
 ];
 
 const ID_SET = new Set<GroupColorId>(GROUP_COLORS.map((c) => c.id));

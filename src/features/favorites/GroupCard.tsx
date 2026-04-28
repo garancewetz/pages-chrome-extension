@@ -12,6 +12,7 @@ import {
 import { BookmarkTile } from './BookmarkTile';
 import { GroupColorPicker } from './GroupColorPicker';
 import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
+import { EmptyDropZone } from '../../components/ui/EmptyDropZone';
 import { IconButton } from '../../components/ui/IconButton';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
@@ -101,8 +102,11 @@ export function GroupCard({
 
   return (
     <section
-      className="group/card flex flex-col gap-2.5 rounded-xl border border-l-4 border-ink-200 bg-white/75 p-3 dark:border-ink-700 dark:bg-ink-800/60"
-      style={{ borderLeftColor: color.dot }}
+      className="group/card relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-l-4 border-ink-200/80 bg-white/80 p-3 transition-shadow duration-200 hover:shadow-[0_12px_32px_-18px_rgba(15,23,42,0.25)] dark:border-ink-700/70 dark:bg-ink-800/60"
+      style={{
+        borderLeftColor: color.dot,
+        backgroundImage: `linear-gradient(135deg, ${color.dot}26 0%, transparent 50%)`,
+      }}
       aria-label={`Groupe ${group.name}`}
     >
       <header className="flex items-center justify-between gap-2">
@@ -134,7 +138,7 @@ export function GroupCard({
               type="button"
               onClick={() => inputRef.current?.focus()}
               aria-label={`Renommer le groupe ${group.name}`}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-ink-400 opacity-60 transition-all hover:bg-violet-50 hover:text-violet-700 group-hover/title:opacity-100 group-focus-within/title:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-400 dark:hover:bg-violet-500/20 dark:hover:text-violet-200"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-ink-400 transition-colors hover:bg-violet-50 hover:text-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-400 dark:hover:bg-violet-500/20 dark:hover:text-violet-200"
             >
               <Pencil size={12} aria-hidden />
             </button>
@@ -144,7 +148,7 @@ export function GroupCard({
           </span>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover/card:opacity-100 focus-within:opacity-100">
+        <div className="flex shrink-0 items-center gap-1">
           {onMoveGroup ? (
             <>
               <IconButton
@@ -195,10 +199,10 @@ export function GroupCard({
           aria-label={`Favoris de ${group.name}`}
         >
           {group.items.length === 0 ? (
-            <li className="col-span-full grid place-items-center rounded-md border border-dashed border-ink-200 bg-white/20 p-5 text-center text-sm text-ink-500 dark:border-ink-700/50 dark:bg-white/[0.02] dark:text-ink-300">
+            <EmptyDropZone size="sm">
               Glissez ici un onglet ouvert ou un favori pour l'ajouter à «&nbsp;
               {group.name}&nbsp;».
-            </li>
+            </EmptyDropZone>
           ) : (
             group.items.map((b) => (
               <BookmarkTile

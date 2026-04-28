@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { GoogleSearch } from './components/GoogleSearch';
+import { Logo } from './components/ui/Logo';
 import { SearchBar } from './components/ui/SearchBar';
 import { ThemeToggle } from './components/ui/ThemeToggle';
 import { FavoritesPanel } from './features/favorites/FavoritesPanel';
@@ -228,8 +229,8 @@ export default function App() {
     <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-5 px-5 pb-8 pt-3 md:px-8">
       <header className="flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2.5">
-          <Logo />
-          <h1 className="font-display text-base font-semibold text-ink-800 dark:text-ink-50 tracking-tight">
+          <Logo size={26} />
+          <h1 className="font-display text-xl font-bold tracking-tight bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent dark:from-violet-300 dark:via-fuchsia-300 dark:to-rose-300">
             Mosaïque
           </h1>
         </div>
@@ -316,12 +317,3 @@ export default function App() {
   );
 }
 
-function Logo() {
-  return (
-    <svg viewBox="0 0 64 64" className="h-5 w-5 shrink-0" aria-hidden="true">
-      <rect x="4" y="4" width="32" height="56" rx="8" fill="#9582d0" />
-      <rect x="40" y="4" width="20" height="26" rx="6" fill="#d6839a" />
-      <rect x="40" y="34" width="20" height="26" rx="6" fill="#5fadd0" />
-    </svg>
-  );
-}
