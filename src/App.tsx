@@ -23,7 +23,6 @@ import { TabPreview } from './features/tabs/DraggableTab';
 import { BookmarkPreview } from './features/favorites/BookmarkTile';
 import { useTabs, type Tab } from './features/tabs/useTabs';
 import {
-  FAVORITES_ROOT_ID,
   useBookmarks,
   type Bookmark,
   type BookmarksApi,
@@ -78,11 +77,11 @@ function resolveDropPosition(
     // Insert after the last individual bookmark (by Chrome index) so folders
     // stay after all URLs even when Chrome has them interleaved.
     const rootItems = api.favoriteItems.filter(
-      (b) => b.parentId === FAVORITES_ROOT_ID,
+      (b) => b.parentId === api.favoritesRootId,
     );
     const lastItem = rootItems.at(-1);
     return {
-      parentId: FAVORITES_ROOT_ID,
+      parentId: api.favoritesRootId,
       index: lastItem ? lastItem.index + 1 : 0,
     };
   }
@@ -95,17 +94,17 @@ function resolveDropPosition(
     // Use the bookmark's actual Chrome index so the move lands at the correct
     // position even when folders are interleaved with URLs in Chrome's tree.
     if (
-      bookmark.parentId === FAVORITES_ROOT_ID ||
+      api.rootBookmarkFolderIds.includes(bookmark.parentId) ||
       findGroup(api, bookmark.parentId)
     ) {
       return { parentId: bookmark.parentId, index: bookmark.index };
     }
     const rootItems = api.favoriteItems.filter(
-      (b) => b.parentId === FAVORITES_ROOT_ID,
+      (b) => b.parentId === api.favoritesRootId,
     );
     const lastItem = rootItems.at(-1);
     return {
-      parentId: FAVORITES_ROOT_ID,
+      parentId: api.favoritesRootId,
       index: lastItem ? lastItem.index + 1 : 0,
     };
   }
