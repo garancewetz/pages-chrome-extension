@@ -157,6 +157,77 @@ export function TileActionsMenu({
   const baseItem =
     'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40';
 
+  // Détache de la fin tout bloc « divider + actions destructrices » pour
+  // l'épingler en footer collant : ainsi « Supprimer » reste atteignable même
+  // quand la liste de groupes au milieu déborde.
+  let splitIdx = items.length;
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (it.kind === 'divider' || (it.kind === 'action' && it.danger)) {
+      splitIdx = i;
+    } else {
+      break;
+    }
+  }
+  const trailing = items.slice(splitIdx);
+  const hasDangerFooter = trailing.some(
+    (it) => it.kind === 'action' && it.danger,
+  );
+  const headItems = hasDangerFooter ? items.slice(0, splitIdx) : items;
+  // Le footer a déjà une bordure haute — on supprime le divider de tête
+  // pour ne pas doubler le trait.
+  const footerItems = hasDangerFooter
+    ? trailing[0]?.kind === 'divider'
+      ? trailing.slice(1)
+      : trailing
+    : [];
+
+  const renderItem = (item: TileActionsItem) => {
+    if (item.kind === 'divider') {
+      return (
+        <hr
+          key={item.key}
+          className="my-1 border-t border-ink-200 dark:border-ink-700"
+        />
+      );
+    }
+    if (item.kind === 'group-header') {
+      return (
+        <span
+          key={item.key}
+          className="px-2.5 pb-1 pt-1.5 text-sm font-semibold uppercase tracking-wider text-ink-600 dark:text-ink-200"
+        >
+          {item.label}
+        </span>
+      );
+    }
+    const isFlashing = flashKey === item.key;
+    const idleStyle = item.danger
+      ? 'text-rose-700 hover:bg-rose-50 dark:text-rose-200 dark:hover:bg-rose-500/20'
+      : 'text-ink-700 hover:bg-violet-50 dark:text-ink-100 dark:hover:bg-violet-500/20';
+    const flashStyle = 'bg-emerald-600 text-white dark:bg-emerald-500';
+    const stateStyle = isFlashing ? flashStyle : idleStyle;
+    return (
+      <button
+        key={item.key}
+        type="button"
+        role="menuitem"
+        onClick={(e) => {
+          e.stopPropagation();
+          runAction(item);
+        }}
+        className={`${baseItem} ${stateStyle}`}
+      >
+        <span className="grid h-5 w-5 shrink-0 place-items-center">
+          {isFlashing ? <Check size={18} aria-hidden /> : item.icon}
+        </span>
+        <span className="flex-1 truncate">
+          {isFlashing ? (item.successLabel ?? 'Fait !') : item.label}
+        </span>
+      </button>
+    );
+  };
+
   return (
     <>
       <button
@@ -192,60 +263,16 @@ export function TileActionsMenu({
                 bottom: coords.bottom,
                 zIndex: 60,
               }}
-              className="flex max-h-80 w-60 flex-col overflow-y-auto overscroll-contain rounded-xl border-2 border-ink-200 bg-white p-1.5 shadow-xl dark:border-ink-700 dark:bg-ink-800"
+              className="flex max-h-80 w-60 flex-col overflow-hidden rounded-xl border-2 border-ink-200 bg-white shadow-xl dark:border-ink-700 dark:bg-ink-800"
             >
-              {items.map((item) => {
-                if (item.kind === 'divider') {
-                  return (
-                    <hr
-                      key={item.key}
-                      className="my-1 border-t border-ink-200 dark:border-ink-700"
-                    />
-                  );
-                }
-                if (item.kind === 'group-header') {
-                  return (
-                    <span
-                      key={item.key}
-                      className="px-2.5 pb-1 pt-1.5 text-sm font-semibold uppercase tracking-wider text-ink-600 dark:text-ink-200"
-                    >
-                      {item.label}
-                    </span>
-                  );
-                }
-                const isFlashing = flashKey === item.key;
-                const idleStyle = item.danger
-                  ? 'text-rose-700 hover:bg-rose-50 dark:text-rose-200 dark:hover:bg-rose-500/20'
-                  : 'text-ink-700 hover:bg-violet-50 dark:text-ink-100 dark:hover:bg-violet-500/20';
-                const flashStyle =
-                  'bg-emerald-600 text-white dark:bg-emerald-500';
-                const stateStyle = isFlashing ? flashStyle : idleStyle;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    role="menuitem"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      runAction(item);
-                    }}
-                    className={`${baseItem} ${stateStyle}`}
-                  >
-                    <span className="grid h-5 w-5 shrink-0 place-items-center">
-                      {isFlashing ? (
-                        <Check size={18} aria-hidden />
-                      ) : (
-                        item.icon
-                      )}
-                    </span>
-                    <span className="flex-1 truncate">
-                      {isFlashing
-                        ? (item.successLabel ?? 'Fait !')
-                        : item.label}
-                    </span>
-                  </button>
-                );
-              })}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5">
+                {headItems.map(renderItem)}
+              </div>
+              {footerItems.length > 0 ? (
+                <div className="shrink-0 border-t-2 border-ink-200 bg-white p-1.5 dark:border-ink-700 dark:bg-ink-800">
+                  {footerItems.map(renderItem)}
+                </div>
+              ) : null}
             </div>,
             document.body,
           )
