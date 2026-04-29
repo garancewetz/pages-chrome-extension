@@ -27,11 +27,13 @@ type ActiveToast = {
   id: number;
   message: string;
   onUndo?: () => void;
+  durationMs: number;
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ActiveToast | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const clearTimer = () => {
     if (timer.current) {
@@ -40,6 +42,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const armTimer = useCallback((id: number, durationMs: number) => {
+    clearTimer();
+    timer.current = setTimeout(() => {
+      setToast((current) => (current?.id === id ? null : current));
+      timer.current = null;
+    }, durationMs);
+  }, []);
+
   const dismiss = useCallback(() => {
     clearTimer();
     setToast(null);
@@ -47,15 +57,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showToast = useCallback<ToastContextValue['showToast']>(
     ({ message, onUndo, durationMs = DEFAULT_DURATION_MS }) => {
-      clearTimer();
       const id = Date.now() + Math.random();
-      setToast({ id, message, onUndo });
-      timer.current = setTimeout(() => {
-        setToast((current) => (current?.id === id ? null : current));
-        timer.current = null;
-      }, durationMs);
+      setToast({ id, message, onUndo, durationMs });
+      armTimer(id, durationMs);
     },
-    [],
+    [armTimer],
   );
 
   useEffect(() => () => clearTimer(), []);
@@ -63,6 +69,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const handleUndo = () => {
     toast?.onUndo?.();
     dismiss();
+  };
+
+  // Pause auto-dismiss tant que la souris ou le focus est sur le toast :
+  // l'utilisatrice a le temps de lire / cliquer Annuler sans pression.
+  const pause = () => clearTimer();
+  const resume = () => {
+    if (!toast) return;
+    if (cardRef.current?.matches(':hover')) return;
+    if (cardRef.current?.contains(document.activeElement)) return;
+    armTimer(toast.id, toast.durationMs);
   };
 
   return (
@@ -74,7 +90,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           aria-live="polite"
           className="pointer-events-none fixed inset-x-0 bottom-6 z-[80] flex justify-center px-4"
         >
-          <div className="pointer-events-auto flex items-center gap-2 rounded-xl border-2 border-ink-200 bg-white px-3 py-2 shadow-xl dark:border-ink-700 dark:bg-ink-800">
+          <div
+            ref={cardRef}
+            onMouseEnter={pause}
+            onMouseLeave={resume}
+            onFocus={pause}
+            onBlur={resume}
+            className="pointer-events-auto flex items-center gap-2 rounded-xl border-2 border-ink-200 bg-white px-3 py-2 shadow-xl dark:border-ink-700 dark:bg-ink-800"
+          >
             <span className="px-1 text-base text-ink-800 dark:text-ink-50">
               {toast.message}
             </span>
