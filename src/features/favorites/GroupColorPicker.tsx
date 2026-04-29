@@ -75,10 +75,10 @@ export function GroupColorPicker({ current, groupName, onChange }: Props) {
         title="Changer la couleur"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
       >
         <span
-          className="block h-4 w-4 rounded-full ring-1 ring-black/10 dark:ring-white/15"
+          className="block h-5 w-5 rounded-full ring-1 ring-black/10 dark:ring-white/15"
           style={{ backgroundColor: currentColor.dot }}
         />
       </button>
@@ -108,7 +108,7 @@ export function GroupColorPicker({ current, groupName, onChange }: Props) {
                     onChange(c.id);
                     setOpen(false);
                   }}
-                  className="grid h-8 w-8 place-items-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+                  className="grid h-9 w-9 place-items-center rounded-full transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
                 >
                   <span
                     className="block h-5 w-5 rounded-full ring-1 ring-black/10 dark:ring-white/15"

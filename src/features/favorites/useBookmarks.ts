@@ -68,12 +68,24 @@ type BookmarkModel = {
   groups: Group[];
 };
 
+export type BookmarkSnapshot = {
+  title: string;
+  url: string;
+  parentId: string;
+  index: number;
+};
+
+export type GroupSnapshot = {
+  name: string;
+  parentId: string;
+  index: number;
+  items: { title: string; url: string }[];
+};
+
 export type BookmarksApi = BookmarkModel & {
   loaded: boolean;
   /** ID Chrome du dossier « barre des favoris » (création de groupes, drop racine). */
   favoritesRootId: string;
-  /** ID du dossier « autres favoris » (réordonnancement des favoris racine). */
-  otherBookmarksRootId: string;
   /** Tous les dossiers racine du profil (barre, autres, mobile, géré, …) — repères pour le DnD. */
   rootBookmarkFolderIds: readonly string[];
   addGroup: (name: string) => Promise<string | undefined>;
@@ -91,6 +103,8 @@ export type BookmarksApi = BookmarkModel & {
     toParentId: string,
     toIndex: number,
   ) => Promise<void>;
+  restoreBookmark: (snapshot: BookmarkSnapshot) => Promise<void>;
+  restoreGroup: (snapshot: GroupSnapshot) => Promise<void>;
 };
 
 function findNode(
@@ -108,17 +122,14 @@ function findNode(
 }
 
 /**
- * Résout les dossiers système « barre des favoris » et « autres favoris ».
+ * Résout le dossier système « barre des favoris ».
  * Ne pas supposer des IDs fixes : sync, import ou Chrome géré peuvent changer l’arbre.
  */
-function resolveStandardRoots(tree: chrome.bookmarks.BookmarkTreeNode[]): {
-  bar: chrome.bookmarks.BookmarkTreeNode | undefined;
-  other: chrome.bookmarks.BookmarkTreeNode | undefined;
-} {
+function resolveBarRoot(
+  tree: chrome.bookmarks.BookmarkTreeNode[],
+): chrome.bookmarks.BookmarkTreeNode | undefined {
   const root = tree[0];
-  if (!root?.children?.length) {
-    return { bar: undefined, other: undefined };
-  }
+  if (!root?.children?.length) return undefined;
 
   const folders = root.children.filter((n) => !n.url);
   const id1 = findNode(tree, DEFAULT_BAR_ID);
@@ -131,28 +142,19 @@ function resolveStandardRoots(tree: chrome.bookmarks.BookmarkTreeNode[]): {
     id1.parentId === BOOKMARK_ROOT_ID &&
     id2.parentId === BOOKMARK_ROOT_ID
   ) {
-    return { bar: id1, other: id2 };
+    return id1;
   }
 
   const byBarTitle = folders.find((n) => isBookmarkBarTitle(n.title));
   const byOtherTitle = folders.find((n) => isOtherBookmarksTitle(n.title));
-  if (byBarTitle && byOtherTitle) {
-    return { bar: byBarTitle, other: byOtherTitle };
-  }
+  if (byBarTitle && byOtherTitle) return byBarTitle;
 
-  if (folders.length === 2) {
-    return { bar: folders[0], other: folders[1] };
-  }
+  if (folders.length === 2) return folders[0];
 
   // Souvent : [Signets gérés, Barre, Autres] sous Chrome entreprise
-  if (folders.length >= 3) {
-    return { bar: folders[1], other: folders[2] };
-  }
+  if (folders.length >= 3) return folders[1];
 
-  return {
-    bar: byBarTitle ?? folders[0],
-    other: byOtherTitle ?? folders[1],
-  };
+  return byBarTitle ?? folders[0];
 }
 
 function toBookmark(node: chrome.bookmarks.BookmarkTreeNode): Bookmark {
@@ -240,8 +242,6 @@ export function useBookmarks(): BookmarksApi {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [favoritesRootId, setFavoritesRootId] = useState(DEFAULT_BAR_ID);
-  const [otherBookmarksRootId, setOtherBookmarksRootId] =
-    useState(DEFAULT_OTHER_ID);
   const [rootBookmarkFolderIds, setRootBookmarkFolderIds] = useState<
     readonly string[]
   >([DEFAULT_BAR_ID, DEFAULT_OTHER_ID]);
@@ -251,7 +251,6 @@ export function useBookmarks(): BookmarksApi {
       setFavoriteItems([]);
       setGroups([]);
       setFavoritesRootId(DEFAULT_BAR_ID);
-      setOtherBookmarksRootId(DEFAULT_OTHER_ID);
       setRootBookmarkFolderIds([DEFAULT_BAR_ID, DEFAULT_OTHER_ID]);
       setLoaded(true);
       return;
@@ -259,10 +258,9 @@ export function useBookmarks(): BookmarksApi {
     void chrome.bookmarks
       .getTree()
       .then((tree) => {
-        const { bar, other } = resolveStandardRoots(tree);
+        const bar = resolveBarRoot(tree);
         const containers = getProfileContainerRoots(tree);
         setFavoritesRootId(bar?.id ?? DEFAULT_BAR_ID);
-        setOtherBookmarksRootId(other?.id ?? DEFAULT_OTHER_ID);
         setRootBookmarkFolderIds(containers.map((n) => n.id));
         const model = buildModel(tree);
         setFavoriteItems(model.favoriteItems);
@@ -406,6 +404,46 @@ export function useBookmarks(): BookmarksApi {
     }
   }, []);
 
+  const restoreBookmark = useCallback(
+    async (snapshot: BookmarkSnapshot): Promise<void> => {
+      if (!isExtension) return;
+      try {
+        await chrome.bookmarks.create({
+          parentId: snapshot.parentId,
+          title: snapshot.title,
+          url: snapshot.url,
+          index: snapshot.index,
+        });
+      } catch (err) {
+        console.error('[mosaic] restoreBookmark failed', { snapshot, err });
+      }
+    },
+    [],
+  );
+
+  const restoreGroup = useCallback(
+    async (snapshot: GroupSnapshot): Promise<void> => {
+      if (!isExtension) return;
+      try {
+        const folder = await chrome.bookmarks.create({
+          parentId: snapshot.parentId,
+          title: snapshot.name,
+          index: snapshot.index,
+        });
+        for (const item of snapshot.items) {
+          await chrome.bookmarks.create({
+            parentId: folder.id,
+            title: item.title,
+            url: item.url,
+          });
+        }
+      } catch (err) {
+        console.error('[mosaic] restoreGroup failed', { snapshot, err });
+      }
+    },
+    [],
+  );
+
   const moveBookmark = useCallback(
     async (
       id: string,
@@ -447,7 +485,6 @@ export function useBookmarks(): BookmarksApi {
   return {
     loaded,
     favoritesRootId,
-    otherBookmarksRootId,
     rootBookmarkFolderIds,
     favoriteItems,
     groups,
@@ -459,5 +496,7 @@ export function useBookmarks(): BookmarksApi {
     renameBookmark,
     removeBookmark,
     moveBookmark,
+    restoreBookmark,
+    restoreGroup,
   };
 }

@@ -9,7 +9,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { GroupDot } from '../../components/ui/GroupDot';
-import { PortalTooltip } from '../../components/ui/PortalTooltip';
 import {
   TileActionsMenu,
   type TileActionsItem,
@@ -152,6 +151,7 @@ export function BookmarkTile({
             label: 'Hors groupe',
             icon: <Star size={16} aria-hidden />,
             onSelect: () => onAssign(bookmark.id, { type: 'root' }),
+            successLabel: 'Déplacé !',
           },
         ]
       : []),
@@ -163,6 +163,7 @@ export function BookmarkTile({
         label: g.name,
         icon: <GroupDot color={groupDotById[g.id] ?? '#94a3b8'} />,
         onSelect: () => onAssign(bookmark.id, { type: 'group', groupId: g.id }),
+        successLabel: 'Déplacé !',
       })),
     {
       kind: 'action',
@@ -170,6 +171,7 @@ export function BookmarkTile({
       label: 'Nouveau groupe…',
       icon: <FolderPlus size={16} aria-hidden />,
       onSelect: () => onAssign(bookmark.id, { type: 'new-group' }),
+      successLabel: 'Déplacé !',
     },
     { kind: 'divider', key: 'd1' },
     {
@@ -179,7 +181,6 @@ export function BookmarkTile({
       icon: <Trash2 size={16} aria-hidden />,
       onSelect: () => onRemove(bookmark.id),
       danger: true,
-      confirmLabel: 'Cliquer pour confirmer',
     },
   ];
 
@@ -193,25 +194,22 @@ export function BookmarkTile({
       dragListeners={editing ? undefined : listeners}
       topLeft={
         editing ? null : (
-          <PortalTooltip label="Renommer">
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              aria-label={`Renommer ${bookmark.title}`}
-              className={`${tileCornerInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
-            >
-              <Pencil size={13} aria-hidden />
-            </button>
-          </PortalTooltip>
-        )
-      }
-      bottomRight={
-        editing ? null : (
           <TileActionsMenu
             items={menuItems}
             triggerLabel={`Modifier le favori ${bookmark.title}`}
-            triggerTooltip="Modifier ce favori"
           />
+        )
+      }
+      topRight={
+        editing ? null : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label={`Renommer ${bookmark.title}`}
+            className={`${tileCornerInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
+          >
+            <Pencil size={13} aria-hidden />
+          </button>
         )
       }
     >
@@ -230,7 +228,7 @@ export function BookmarkPreview({ bookmark }: { bookmark: Bookmark }) {
       <TileBody
         favicon={<Favicon url={bookmark.url} />}
         title={
-          <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-sm font-medium leading-snug text-ink-800 dark:text-ink-100">
+          <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-base font-semibold leading-snug text-ink-800 dark:text-ink-100">
             {bookmark.title}
           </span>
         }

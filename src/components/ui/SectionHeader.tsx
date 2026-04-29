@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { LucideProps } from 'lucide-react';
 
-export type SectionAccent = 'violet' | 'sky' | 'amber';
+export type SectionAccent = 'violet' | 'sky';
 
 type IconType = ComponentType<LucideProps>;
 
@@ -14,21 +14,14 @@ type Props = {
   id?: string;
 };
 
-const accentClasses: Record<SectionAccent, { wrap: string; gradient: string }> = {
+const accentClasses: Record<SectionAccent, { wrap: string; title: string }> = {
   violet: {
     wrap: 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/15 dark:text-violet-200',
-    gradient:
-      'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent dark:from-violet-300 dark:via-fuchsia-300 dark:to-rose-300',
+    title: 'text-violet-700 dark:text-violet-200',
   },
   sky: {
     wrap: 'bg-sky-500/10 text-sky-600 dark:bg-sky-500/15 dark:text-sky-200',
-    gradient:
-      'bg-gradient-to-r from-sky-600 to-cyan-500 bg-clip-text text-transparent dark:from-sky-300 dark:to-cyan-200',
-  },
-  amber: {
-    wrap: 'bg-amber-500/15 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200',
-    gradient:
-      'bg-gradient-to-r from-amber-500 to-rose-500 bg-clip-text text-transparent dark:from-amber-300 dark:to-rose-300',
+    title: 'text-sky-700 dark:text-sky-200',
   },
 };
 
@@ -51,13 +44,13 @@ export function SectionHeader({
       </span>
       <h2
         id={id}
-        className={`font-display text-base font-semibold tracking-tight ${a.gradient}`}
+        className={`font-display text-lg font-semibold tracking-tight ${a.title}`}
       >
         {title}
       </h2>
       {typeof count === 'number' ? (
         <span
-          className="ml-0.5 text-sm font-medium text-ink-400 dark:text-ink-300"
+          className="ml-0.5 text-base font-semibold text-ink-600 dark:text-ink-200"
           aria-hidden
         >
           {count}

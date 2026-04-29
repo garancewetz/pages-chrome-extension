@@ -4,7 +4,7 @@ type Props = {
 
 export function SubsectionTitle({ children }: Props) {
   return (
-    <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-300">
+    <h3 className="text-base font-semibold uppercase tracking-wider text-ink-600 dark:text-ink-200">
       {children}
     </h3>
   );

@@ -1,23 +1,11 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { Tooltip } from './Tooltip';
 
 type Variant = 'square' | 'bare';
-type Size = 'xs' | 'sm' | 'md' | 'lg';
 
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   icon: ReactNode;
   label: string;
   variant?: Variant;
-  size?: Size;
-  tooltip?: string;
-  tooltipSide?: 'top' | 'bottom';
-};
-
-const sizeClasses: Record<Size, string> = {
-  xs: 'h-6 w-6',
-  sm: 'h-7 w-7',
-  md: 'h-8 w-8',
-  lg: 'h-9 w-9',
 };
 
 const variantClasses: Record<Variant, string> = {
@@ -27,32 +15,23 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const baseClasses =
-  'inline-grid shrink-0 place-items-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-ink-200 disabled:hover:bg-transparent disabled:hover:text-ink-400 dark:disabled:hover:border-ink-700 dark:disabled:hover:text-ink-300';
+  'inline-grid h-9 w-9 shrink-0 place-items-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-ink-200 disabled:hover:bg-transparent disabled:hover:text-ink-400 dark:disabled:hover:border-ink-700 dark:disabled:hover:text-ink-300';
 
 export function IconButton({
   icon,
   label,
   variant = 'square',
-  size = 'md',
-  tooltip,
-  tooltipSide,
   className = '',
   ...rest
 }: Props) {
-  const button = (
+  return (
     <button
       type="button"
       aria-label={label}
       {...rest}
-      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
     >
       {icon}
     </button>
-  );
-  if (!tooltip) return button;
-  return (
-    <Tooltip label={tooltip} side={tooltipSide}>
-      {button}
-    </Tooltip>
   );
 }

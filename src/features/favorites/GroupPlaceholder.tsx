@@ -30,12 +30,12 @@ export function GroupPlaceholder({ onCreate }: Props) {
       <button
         type="button"
         onClick={onCreate}
-        className="inline-flex items-center gap-2 rounded-lg border-2 border-violet-300 bg-white px-3 py-1.5 text-sm font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500 hover:bg-violet-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-violet-300/40 dark:bg-ink-800 dark:text-violet-100 dark:hover:border-violet-300 dark:hover:bg-violet-500/15"
+        className="inline-flex items-center gap-2 rounded-lg border-2 border-violet-300 bg-white px-3.5 py-2 text-base font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500 hover:bg-violet-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-violet-300/40 dark:bg-ink-800 dark:text-violet-100 dark:hover:border-violet-300 dark:hover:bg-violet-500/15"
       >
         <FolderPlus size={16} aria-hidden />
         Nouveau groupe
       </button>
-      <span className="text-xs text-ink-500 dark:text-ink-300">{DRAG_HINT}</span>
+      <span className="text-sm text-ink-600 dark:text-ink-200">{DRAG_HINT}</span>
     </div>
   );
 }

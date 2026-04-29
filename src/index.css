@@ -20,37 +20,9 @@ body {
 }
 
 body {
-  position: relative;
   background: #f4f3fc;
   color: #1d2138;
   overflow-x: hidden;
-}
-
-/* Halos décoratifs fixes — donnent de la profondeur sans gêner la lecture.
- * pointer-events:none + z-index:-1 pour rester en arrière-plan.
- * Plus marqués en light qu'en dark : les couleurs y disparaissent vite sur blanc. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 70% 55% at 88% -8%,
-      rgba(167, 139, 250, 0.38),
-      transparent 62%
-    ),
-    radial-gradient(
-      ellipse 55% 45% at 8% 105%,
-      rgba(56, 189, 248, 0.32),
-      transparent 62%
-    ),
-    radial-gradient(
-      ellipse 45% 35% at 95% 105%,
-      rgba(251, 113, 133, 0.26),
-      transparent 60%
-    );
 }
 
 html.dark body {
@@ -58,42 +30,10 @@ html.dark body {
   color: #e8eaf4;
 }
 
-html.dark body::before {
-  background:
-    radial-gradient(
-      ellipse 70% 55% at 88% -8%,
-      rgba(139, 92, 246, 0.28),
-      transparent 62%
-    ),
-    radial-gradient(
-      ellipse 55% 45% at 8% 105%,
-      rgba(56, 189, 248, 0.18),
-      transparent 62%
-    ),
-    radial-gradient(
-      ellipse 45% 35% at 95% 105%,
-      rgba(251, 113, 133, 0.16),
-      transparent 60%
-    );
-}
-
 /* Sélection */
 ::selection {
   background: rgba(139, 92, 246, 0.28);
   color: inherit;
-}
-
-/* Ombres "glass" — highlight blanc atténué + ombre portée plus profonde en dark */
-html.dark .shadow-glass {
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
-    0 8px 32px -12px rgba(0, 0, 0, 0.55);
-}
-html.dark .shadow-glass-lg,
-html.dark .hover\:shadow-glass-lg:hover {
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.07) inset,
-    0 20px 60px -20px rgba(0, 0, 0, 0.7);
 }
 
 /* Scrollbar discrète */
@@ -130,87 +70,6 @@ html.dark :focus-visible {
 [class*='focus-visible:ring']:focus-visible,
 [class*='focus:ring']:focus-visible {
   outline: none;
-}
-
-@layer components {
-  /* Surface — border-only, sans ombre, pour cohérence light/dark */
-  .glass {
-    @apply border-2 border-ink-200 bg-white/75;
-  }
-  .dark .glass {
-    @apply border-ink-700 bg-ink-800/50;
-  }
-
-  .glass-strong {
-    @apply border-2 border-ink-200 bg-white/90;
-  }
-  .dark .glass-strong {
-    @apply border-ink-700 bg-ink-800/70;
-  }
-
-  .glass-soft {
-    @apply border-2 border-ink-200/70 bg-white/60;
-  }
-  .dark .glass-soft {
-    @apply border-ink-700/60 bg-ink-800/40;
-  }
-
-  /* Bordure dégradée — technique padding-box + border-box */
-  .gradient-border-violet {
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.65))
-        padding-box,
-      linear-gradient(135deg, #a78bfa 0%, #fb7185 100%) border-box;
-    border: 1.5px solid transparent;
-  }
-  .dark .gradient-border-violet {
-    background:
-      linear-gradient(rgba(15, 16, 35, 0.55), rgba(15, 16, 35, 0.55))
-        padding-box,
-      linear-gradient(135deg, #8b5cf6 0%, #f43f5e 100%) border-box;
-  }
-
-  .gradient-border-sky {
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6))
-        padding-box,
-      linear-gradient(135deg, #38bdf8 0%, #22d3ee 100%) border-box;
-    border: 1.5px solid transparent;
-  }
-  .dark .gradient-border-sky {
-    background:
-      linear-gradient(rgba(15, 16, 35, 0.55), rgba(15, 16, 35, 0.55))
-        padding-box,
-      linear-gradient(135deg, #38bdf8 0%, #06b6d4 100%) border-box;
-  }
-
-  .gradient-border-amber {
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.6))
-        padding-box,
-      linear-gradient(135deg, #fbbf24 0%, #fb7185 100%) border-box;
-    border: 1.5px solid transparent;
-  }
-  .dark .gradient-border-amber {
-    background:
-      linear-gradient(rgba(15, 16, 35, 0.55), rgba(15, 16, 35, 0.55))
-        padding-box,
-      linear-gradient(135deg, #f59e0b 0%, #e11d48 100%) border-box;
-  }
-
-  /* Texte dégradé — variantes par section */
-  .text-gradient-mosaic {
-    @apply bg-gradient-to-r from-violet-600 via-rose-500 to-sky-500 bg-clip-text text-transparent dark:from-violet-300 dark:via-rose-300 dark:to-sky-300;
-  }
-  .text-gradient-violet {
-    @apply bg-gradient-to-r from-violet-600 to-rose-500 bg-clip-text text-transparent dark:from-violet-300 dark:to-rose-300;
-  }
-  .text-gradient-sky {
-    @apply bg-gradient-to-r from-sky-600 to-cyan-500 bg-clip-text text-transparent dark:from-sky-300 dark:to-cyan-200;
-  }
-  .text-gradient-amber {
-    @apply bg-gradient-to-r from-amber-500 to-rose-500 bg-clip-text text-transparent dark:from-amber-300 dark:to-rose-300;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

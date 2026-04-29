@@ -2,11 +2,11 @@
   "manifest_version": 3,
   "name": "Mes Pages",
   "version": "0.1.0",
-  "description": "Mes onglets, mes favoris et mes notes réunis sur la page Nouvel onglet.",
+  "description": "Mes onglets et mes favoris réunis sur la page Nouvel onglet.",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["tabs", "bookmarks", "storage", "favicon"],
+  "permissions": ["tabs", "bookmarks", "favicon"],
   "icons": {
     "16": "favicon.svg",
     "48": "favicon.svg",

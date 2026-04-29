@@ -1,32 +1,32 @@
-# Mosaic Dashboard — Contexte
+# Mes Pages — Contexte
 
 ## Ce que fait l'extension
 
-**Mosaic Dashboard** remplace la page **Nouvel onglet** de Chrome par un tableau de bord en mosaïque qui regroupe trois sources d'information souvent éparpillées :
+**Mes Pages** remplace la page **Nouvel onglet** de Chrome par un tableau de bord en mosaïque qui regroupe deux sources d'information souvent éparpillées :
 
-1. **Onglets ouverts** — tous les onglets de toutes les fenêtres Chrome, en direct.
-2. **Favoris** — l'arbre des bookmarks aplati, organisé en groupes (sections).
-3. **Note rapide** — une zone de texte libre persistée dans `chrome.storage.local`.
+1. **Favoris** — l'arbre des bookmarks aplati, organisé en groupes colorés (un dossier Chrome = un groupe).
+2. **Onglets ouverts** — tous les onglets de toutes les fenêtres Chrome, en direct.
 
-Une **barre de filtre** unique en haut de la page filtre simultanément les onglets et les favoris par titre ou URL.
+Une **barre Google** en haut de la page permet une recherche directe ; une **barre de filtre** filtre simultanément les onglets et les favoris par titre ou URL.
 
-L'utilisateur peut **réorganiser la mosaïque** entièrement en glisser-déposer :
+L'utilisateur peut réorganiser ses favoris en glisser-déposer :
 
-- réordonner les blocs (favoris, onglets, note, sections de favoris) en les attrapant par leur poignée,
-- basculer chaque bloc entre **pleine largeur** et **demi-largeur** (la mise en page est une grille 2 colonnes ≥ md),
-- glisser un onglet ouvert vers les favoris pour le bookmarker,
-- glisser un favori ou un onglet sur le placeholder « Glisser ici pour créer un groupe » pour créer une nouvelle section,
-- déplacer un favori d'une section à une autre.
+- glisser un onglet ouvert sur un groupe (ou en racine) pour le bookmarker,
+- glisser un favori ou un onglet sur le placeholder « Nouveau groupe » pour créer un nouveau groupe,
+- déplacer un favori d'un groupe à un autre,
+- réordonner les groupes via les flèches haut/bas (DnD désactivé pendant un filtre actif),
+- basculer chaque groupe ou le bloc onglets entre **pleine largeur** et **demi-largeur**,
+- choisir une couleur par groupe (palette de 7 teintes, persistée).
 
-L'ordre des blocs et leur largeur sont persistés dans `localStorage`.
+Les largeurs et les couleurs sont persistées dans `localStorage`. L'ordre des sections (Favoris puis Onglets) est fixe — pensé pour un usage post-AVC où la prévisibilité prime.
 
 ## Pourquoi
 
 À chaque ouverture d'un nouvel onglet, on a sous les yeux :
 
-- ce qu'on a déjà ouvert (au lieu de ré-ouvrir un doublon),
 - les favoris pertinents, organisables sans quitter le dashboard,
-- les notes en cours.
+- ce qu'on a déjà ouvert (au lieu de ré-ouvrir un doublon),
+- une recherche Google immédiate.
 
 C'est volontairement **minimaliste** : pas de comptes, pas de sync cloud, pas de widgets externes. Tout est local, tout est rapide.
 
@@ -46,44 +46,54 @@ C'est volontairement **minimaliste** : pas de comptes, pas de sync cloud, pas de
 | ----------- | ------------------------------------------------ |
 | `tabs`      | lister, activer, fermer les onglets              |
 | `bookmarks` | lire et modifier l'arbre des favoris             |
-| `storage`   | persister la note rapide                         |
 | `favicon`   | servir les favicons des favoris via `_favicon/`  |
 
-Aucun accès réseau, aucun `host_permissions`, aucune injection de script dans les pages visitées.
+Aucun accès réseau, aucun `host_permissions`, aucune injection de script dans les pages visitées. Les préférences (largeurs, couleurs, thème) vivent dans `localStorage`, pas dans `chrome.storage`.
 
 ### Architecture du code
 
 ```
 src/
 ├── components/
-│   ├── ui/              composants muets (Card, SearchBar)
-│   └── SortableBlock.tsx  wrapper sortable + toggle full/half pour un bloc top-level
-├── features/            une feature = un dossier (Panel + hook qui parle à chrome.*)
-│   ├── tabs/            useTabs, TabsPanel, DraggableTab
-│   ├── favorites/       useBookmarks, FlatBookmarks, BookmarkSection,
-│   │                    BookmarkTile, SectionPlaceholder
-│   └── notes/           useNotes, NotesPanel
+│   ├── GoogleSearch.tsx        barre de recherche Google
+│   └── ui/                     composants muets, jamais d'API extension
+│       ├── Tile.tsx, TilePreview, TileBody, tileCornerInner
+│       ├── TileActionsMenu.tsx menu d'actions par tuile (portail, flash succès)
+│       ├── SectionHeader.tsx, SubsectionTitle.tsx
+│       ├── IconButton.tsx, ConfirmIconButton.tsx
+│       ├── Tooltip.tsx, PortalTooltip.tsx
+│       ├── EmptyDropZone.tsx, GroupDot.tsx
+│       ├── SearchBar.tsx, ThemeToggle.tsx, Logo.tsx
+├── features/                   une feature = un dossier (Panel + hooks qui parlent à chrome.*)
+│   ├── tabs/                   useTabs, TabsPanel, DraggableTab
+│   └── favorites/              useBookmarks, useAssignment,
+│                               FavoritesPanel, GroupCard, GroupColorPicker,
+│                               GroupPlaceholder, BookmarkTile (+ BookmarkPreview)
 ├── lib/
-│   ├── chrome.ts        helper isExtension pour fallback en mode dev
-│   ├── url.ts           getHostname + getFavicon (helpers partagés)
-│   └── blocks.ts        identifiants de blocs + useBlockOrder + useBlockWidths
-├── App.tsx              orchestre la grille, le filtre et le DnD
-└── main.tsx             point d'entrée React
+│   ├── chrome.ts               helper isExtension pour fallback en mode dev
+│   ├── url.ts                  getHostname + getFavicon (helpers partagés)
+│   ├── widths.ts               useBlockWidth + useBlockWidthMap (full/half)
+│   ├── groupColors.ts          palette + useGroupColorMap
+│   ├── theme.ts                useTheme (light/dark, persisté)
+│   └── dnd.ts                  useActiveDragType, isBookmarkDropTarget
+├── App.tsx                     orchestre le layout, le filtre et le DnD
+├── main.tsx                    point d'entrée React
+└── index.css                   Tailwind + globals (scrollbar, focus, dégradé titre)
 ```
 
 **Règles de séparation :**
 
 - `components/ui/` ne touche jamais à `chrome.*` ni à dnd-kit.
 - Toute logique d'API extension vit dans un hook `useX` à côté de son `XPanel.tsx`.
-- Tous les helpers d'URL/favicon vivent dans `lib/url.ts` (jamais dupliqués).
-- L'état de la mosaïque (ordre + largeur des blocs) vit dans `lib/blocks.ts` via `useBlockOrder` et `useBlockWidths`.
+- Les helpers d'URL/favicon vivent dans `lib/url.ts` (jamais dupliqués).
+- Les préférences UI (largeurs, couleurs, thème) vivent dans `lib/` via des hooks `localStorage`.
 
 ### Mode dev vs runtime extension
 
 `src/lib/chrome.ts` expose `isExtension`. Chaque hook teste cette valeur :
 
-- **Dans Chrome (extension chargée)** → vraie API `chrome.tabs` / `chrome.bookmarks` / `chrome.storage`, favicons servis par `chrome.runtime.getURL('/_favicon/')`.
-- **En `npm run dev`** → données factices ou fallback `localStorage`, favicons servis par `s2/favicons` de Google.
+- **Dans Chrome (extension chargée)** → vraie API `chrome.tabs` / `chrome.bookmarks`, favicons servis par `chrome.runtime.getURL('/_favicon/')`.
+- **En `npm run dev`** → onglets factices, pas de favoris, favicons servis par `s2/favicons` de Google.
 
 Conséquence : on peut itérer sur l'UI dans un onglet normal sans recharger l'extension à chaque save.
 
@@ -92,25 +102,27 @@ Conséquence : on peut itérer sur l'UI dans un onglet normal sans recharger l'e
 Toute l'orchestration DnD est dans `App.tsx` :
 
 - Un seul `<DndContext>` couvre toute la page (capteurs : `PointerSensor` à 8 px, `KeyboardSensor`).
-- `collisionDetection` fait du `closestCenter`, restreint aux blocs top-level quand on déplace un bloc.
-- Les types `DragSource` (tab/bookmark) et `DropTarget` (root/section/bookmark/placeholder/block) sont des unions discriminées qui décrivent ce que portent `active.data.current` et `over.data.current`.
-- `resolveDropPosition` calcule `{ parentId, index }` pour `chrome.bookmarks.move`.
-- Le drop sur un placeholder crée la section, y déplace l'élément, puis met le focus sur son input pour la renommer (`autoEditId`).
+- `collisionDetection` fait du `closestCenter`.
+- Les types `DragSource` (tab/bookmark) et `DropTarget` (favorites-root/group/bookmark/placeholder) sont des unions discriminées qui décrivent ce que portent `active.data.current` et `over.data.current`.
+- `useAssignment` regroupe les actions sans drag (épingler un onglet, ranger un favori, créer un groupe vide) ; `resolveDropPosition` calcule `{ parentId, index }` pour `chrome.bookmarks.move`.
+- Le drop sur le placeholder « Nouveau groupe » crée le groupe, y déplace l'élément, puis met le focus sur son input pour le renommer (`autoEditId`).
+- Une **alternative single-click** existe pour chaque action de drag : le menu d'actions par tuile (Tile + TileActionsMenu) propose « Ranger dans » / « Épingler dans » + flash de succès — indispensable pour le public cible.
 
 ### Réactivité aux changements
 
 - **Onglets** : `useTabs` s'abonne à `chrome.tabs.onCreated/onRemoved/onUpdated` et re-query la liste.
-- **Favoris** : `useBookmarks` s'abonne à `chrome.bookmarks.onCreated/onRemoved/onChanged/onMoved` et reconstruit le modèle (flat + sections).
-- **Note** : sauvegarde à chaque keystroke dans `chrome.storage.local`.
-- **Ordre/largeur des blocs** : sauvegardés dans `localStorage` (`mosaic.blockOrder`, `mosaic.blockWidths`), réconciliés au montage avec les sections présentes.
+- **Favoris** : `useBookmarks` s'abonne à `chrome.bookmarks.onCreated/onRemoved/onChanged/onMoved` et reconstruit le modèle (favoris directs + groupes via `walkFolderTree`, qui supporte les sous-dossiers en fil d'Ariane).
+- **Préférences UI** : sauvegardées dans `localStorage` (`mosaic.tabsWidth`, `mosaic.groupWidths`, `mosaic.groupColors`, `mosaic.theme`).
 
 ## Accessibilité
 
 Public cible : utilisateurs avec contraintes motrices/cognitives (post-AVC notamment).
 
-- Toutes les actions principales sont **single-click** (sauf la suppression d'un favori, qui demande une seconde confirmation cliquable).
-- Labels ARIA explicites sur chaque bouton et zone droppable.
-- `focus-visible:ring-4` partout pour la navigation clavier.
+- Toutes les actions principales sont **single-click** (sauf les suppressions, qui demandent une seconde confirmation cliquable via `ConfirmIconButton`).
+- Toute action accessible en DnD a une **alternative au clic** via `TileActionsMenu` (« Ranger dans », « Épingler dans », « Nouveau groupe »).
+- Échelle typographique resserrée (1.0625 rem de base, pas de `text-2xs`).
+- Labels ARIA explicites sur chaque bouton et zone droppable ; tooltips portalisés (`PortalTooltip`) pour ne pas être coupés par les conteneurs `overflow-hidden`.
+- `focus-visible` global avec ring violet, désactivé là où Tailwind pose déjà un ring.
 - DnD clavier supporté par `KeyboardSensor` + `sortableKeyboardCoordinates`.
 - `prefers-reduced-motion` désactive transitions et animations.
 

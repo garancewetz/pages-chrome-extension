@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { FolderPlus, Globe, Star, X } from 'lucide-react';
-import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
 import { GroupDot } from '../../components/ui/GroupDot';
 import {
   TileActionsMenu,
@@ -68,6 +67,7 @@ export function DraggableTab({
       label: 'Hors groupe',
       icon: <Star size={16} aria-hidden />,
       onSelect: () => onPin(tab, { type: 'root' }),
+      successLabel: 'Épinglé !',
     },
     ...groups.map<TileActionsItem>((g) => ({
       kind: 'action',
@@ -75,6 +75,7 @@ export function DraggableTab({
       label: g.name,
       icon: <GroupDot color={groupDotById[g.id] ?? '#94a3b8'} />,
       onSelect: () => onPin(tab, { type: 'group', groupId: g.id }),
+      successLabel: 'Épinglé !',
     })),
     {
       kind: 'action',
@@ -82,6 +83,7 @@ export function DraggableTab({
       label: 'Nouveau groupe…',
       icon: <FolderPlus size={16} aria-hidden />,
       onSelect: () => onPin(tab, { type: 'new-group' }),
+      successLabel: 'Épinglé !',
     },
   ];
 
@@ -94,21 +96,20 @@ export function DraggableTab({
       dragAttributes={attributes}
       dragListeners={listeners}
       topRight={
-        <ConfirmIconButton
-          onConfirm={() => onClose(tab)}
-          idleIcon={<X size={13} aria-hidden />}
-          idleLabel={`Fermer ${tab.title}`}
-          confirmLabel={`Confirmer la fermeture de ${tab.title}`}
-          tooltip="Fermer"
-          className={tileCornerInner}
-          idleClassName="hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-200"
-        />
+        <button
+          type="button"
+          onClick={() => onClose(tab)}
+          aria-label={`Fermer ${tab.title}`}
+          title="Fermer"
+          className={`${tileCornerInner} hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-200`}
+        >
+          <X size={16} aria-hidden />
+        </button>
       }
-      bottomRight={
+      topLeft={
         <TileActionsMenu
           items={menuItems}
           triggerLabel={`Épingler l'onglet ${tab.title}`}
-          triggerTooltip="Épingler cet onglet"
         />
       }
     >
@@ -123,7 +124,7 @@ export function TabPreview({ tab }: { tab: Tab }) {
       <TileBody
         favicon={<TabFavicon tab={tab} />}
         title={
-          <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-sm font-medium leading-snug text-ink-800 dark:text-ink-100">
+          <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-base font-semibold leading-snug text-ink-800 dark:text-ink-100">
             {tab.title}
           </span>
         }

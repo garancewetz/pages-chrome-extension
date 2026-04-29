@@ -17,15 +17,25 @@ export type TileActionsItem =
       icon: ReactNode;
       onSelect: () => void;
       danger?: boolean;
-      confirmLabel?: string;
+      /** Texte affiché en vert avec coche pendant le flash de succès. Défaut : « Fait ! ». */
+      successLabel?: string;
     }
   | { kind: 'group-header'; key: string; label: string }
   | { kind: 'divider'; key: string };
 
+type TriggerVariant = 'tile' | 'square';
+
 type Props = {
   items: TileActionsItem[];
   triggerLabel: string;
-  triggerTooltip: string;
+  /** `tile` (défaut) : petit bouton dans un coin de tuile. `square` : bouton 36×36 pour un header. */
+  triggerVariant?: TriggerVariant;
+};
+
+const triggerVariantClasses: Record<TriggerVariant, string> = {
+  tile: '',
+  square:
+    'inline-grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink-400 transition-colors hover:bg-violet-50 hover:text-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-300 dark:hover:bg-violet-500/20 dark:hover:text-violet-200',
 };
 
 const MENU_HEIGHT_ESTIMATE = 320;
@@ -39,31 +49,19 @@ type Coords = {
   bottom?: number;
 };
 
-type TooltipPos = { centerX: number; bottom: number };
+const FLASH_MS = 300;
 
-export function TileActionsMenu({ items, triggerLabel, triggerTooltip }: Props) {
+export function TileActionsMenu({
+  items,
+  triggerLabel,
+  triggerVariant = 'tile',
+}: Props) {
   const [open, setOpen] = useState(false);
-  const [confirmKey, setConfirmKey] = useState<string | null>(null);
+  const [flashKey, setFlashKey] = useState<string | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
-  const [hovering, setHovering] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [tooltipPos, setTooltipPos] = useState<TooltipPos | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const showTooltip = !open && (hovering || focused);
-
-  useLayoutEffect(() => {
-    if (!showTooltip || !triggerRef.current) {
-      setTooltipPos(null);
-      return;
-    }
-    const rect = triggerRef.current.getBoundingClientRect();
-    setTooltipPos({
-      centerX: rect.left + rect.width / 2,
-      bottom: window.innerHeight - rect.top + 6,
-    });
-  }, [showTooltip]);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) {
@@ -94,7 +92,11 @@ export function TileActionsMenu({ items, triggerLabel, triggerTooltip }: Props) 
 
   useEffect(() => {
     if (!open) {
-      setConfirmKey(null);
+      setFlashKey(null);
+      if (flashTimer.current) {
+        clearTimeout(flashTimer.current);
+        flashTimer.current = null;
+      }
       return;
     }
     const onClick = (e: MouseEvent) => {
@@ -130,12 +132,26 @@ export function TileActionsMenu({ items, triggerLabel, triggerTooltip }: Props) 
   }, [open]);
 
   const runAction = (item: Extract<TileActionsItem, { kind: 'action' }>) => {
-    if (item.confirmLabel && confirmKey !== item.key) {
-      setConfirmKey(item.key);
+    // Tant qu'un flash de succès est en cours, on ignore les autres clics.
+    if (flashKey) return;
+    // Pour les actions destructrices (suppression), on exécute tout de suite et
+    // on ferme — l'utilisateur peut annuler via le toast.
+    if (item.danger) {
+      item.onSelect();
+      setOpen(false);
       return;
     }
-    item.onSelect();
-    setOpen(false);
+    // Flash vert ✓ AVANT d'exécuter l'action : sinon, si l'action démonte la
+    // tuile (déplacement vers un autre groupe), le menu disparaît avant qu'on
+    // ait pu voir la confirmation.
+    setFlashKey(item.key);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => {
+      flashTimer.current = null;
+      setFlashKey(null);
+      setOpen(false);
+      item.onSelect();
+    }, FLASH_MS);
   };
 
   const baseItem =
@@ -153,33 +169,14 @@ export function TileActionsMenu({ items, triggerLabel, triggerTooltip }: Props) 
           e.stopPropagation();
           setOpen((o) => !o);
         }}
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        className={`${tileCornerInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
+        className={
+          triggerVariant === 'square'
+            ? triggerVariantClasses.square
+            : `${tileCornerInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`
+        }
       >
-        <MoreHorizontal size={14} aria-hidden />
+        <MoreHorizontal size={triggerVariant === 'square' ? 16 : 14} aria-hidden />
       </button>
-
-      {showTooltip && tooltipPos
-        ? createPortal(
-            <span
-              role="tooltip"
-              style={{
-                position: 'fixed',
-                left: tooltipPos.centerX,
-                bottom: tooltipPos.bottom,
-                transform: 'translateX(-50%)',
-                zIndex: 70,
-              }}
-              className="pointer-events-none whitespace-nowrap rounded-md border-2 border-ink-200 bg-white px-1.5 py-0.5 text-[0.6875rem] font-medium text-ink-700 shadow-sm dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
-            >
-              {triggerTooltip}
-            </span>,
-            document.body,
-          )
-        : null}
 
       {open && coords
         ? createPortal(
@@ -210,18 +207,19 @@ export function TileActionsMenu({ items, triggerLabel, triggerTooltip }: Props) 
                   return (
                     <span
                       key={item.key}
-                      className="px-2.5 pb-1 pt-1.5 text-xs font-semibold uppercase tracking-wider text-ink-400 dark:text-ink-300"
+                      className="px-2.5 pb-1 pt-1.5 text-sm font-semibold uppercase tracking-wider text-ink-600 dark:text-ink-200"
                     >
                       {item.label}
                     </span>
                   );
                 }
-                const isConfirming = confirmKey === item.key;
+                const isFlashing = flashKey === item.key;
                 const idleStyle = item.danger
                   ? 'text-rose-700 hover:bg-rose-50 dark:text-rose-200 dark:hover:bg-rose-500/20'
                   : 'text-ink-700 hover:bg-violet-50 dark:text-ink-100 dark:hover:bg-violet-500/20';
-                const confirmStyle =
-                  'bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-400';
+                const flashStyle =
+                  'bg-emerald-600 text-white dark:bg-emerald-500';
+                const stateStyle = isFlashing ? flashStyle : idleStyle;
                 return (
                   <button
                     key={item.key}
@@ -231,18 +229,19 @@ export function TileActionsMenu({ items, triggerLabel, triggerTooltip }: Props) 
                       e.stopPropagation();
                       runAction(item);
                     }}
-                    onBlur={() => setConfirmKey(null)}
-                    className={`${baseItem} ${isConfirming ? confirmStyle : idleStyle}`}
+                    className={`${baseItem} ${stateStyle}`}
                   >
                     <span className="grid h-5 w-5 shrink-0 place-items-center">
-                      {isConfirming ? (
+                      {isFlashing ? (
                         <Check size={18} aria-hidden />
                       ) : (
                         item.icon
                       )}
                     </span>
                     <span className="flex-1 truncate">
-                      {isConfirming ? item.confirmLabel : item.label}
+                      {isFlashing
+                        ? (item.successLabel ?? 'Fait !')
+                        : item.label}
                     </span>
                   </button>
                 );

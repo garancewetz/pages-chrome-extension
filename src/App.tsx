@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -16,9 +16,9 @@ import { GoogleSearch } from './components/GoogleSearch';
 import { Logo } from './components/ui/Logo';
 import { SearchBar } from './components/ui/SearchBar';
 import { ThemeToggle } from './components/ui/ThemeToggle';
+import { ToastProvider, useToast } from './components/ui/Toast';
 import { FavoritesPanel } from './features/favorites/FavoritesPanel';
 import { TabsPanel } from './features/tabs/TabsPanel';
-import { NotesPanel } from './features/notes/NotesPanel';
 import { TabPreview } from './features/tabs/DraggableTab';
 import { BookmarkPreview } from './features/favorites/BookmarkTile';
 import { useTabs, type Tab } from './features/tabs/useTabs';
@@ -58,6 +58,15 @@ function findBookmark(api: BookmarksApi, id: string): Bookmark | undefined {
 }
 
 export default function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  );
+}
+
+function AppContent() {
+  const { showToast } = useToast();
   const [filter, setFilter] = useState('');
   const tabsApi = useTabs();
   const bookmarksApi = useBookmarks();
@@ -65,10 +74,6 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [tabsWidth, toggleTabsWidth] = useBlockWidth(
     'mosaic.tabsWidth',
-    'full',
-  );
-  const [notesWidth, toggleNotesWidth] = useBlockWidth(
-    'mosaic.notesWidth',
     'full',
   );
   const groupWidths = useBlockWidthMap('mosaic.groupWidths', 'half');
@@ -151,6 +156,54 @@ export default function App() {
     );
   };
 
+  const handleRemoveBookmark = useCallback(
+    (id: string): void => {
+      const bm = findBookmark(bookmarksApi, id);
+      void bookmarksApi.removeBookmark(id);
+      if (!bm) return;
+      const snapshot = {
+        title: bm.title,
+        url: bm.url,
+        parentId: bm.parentId,
+        index: bm.index,
+      };
+      showToast({
+        message: `« ${bm.title || 'Favori'} » supprimé`,
+        onUndo: () => {
+          void bookmarksApi.restoreBookmark(snapshot);
+        },
+      });
+    },
+    [bookmarksApi, showToast],
+  );
+
+  const handleRemoveGroup = useCallback(
+    (id: string): void => {
+      const grp = bookmarksApi.groups.find((g) => g.id === id);
+      void bookmarksApi.removeGroup(id);
+      if (!grp) return;
+      const snapshot = {
+        name: grp.name,
+        parentId: grp.parentId,
+        index: grp.index,
+        items: grp.items.map(({ title, url }) => ({ title, url })),
+      };
+      const itemsLabel =
+        grp.items.length === 0
+          ? ''
+          : grp.items.length === 1
+            ? ' (1 favori)'
+            : ` (${grp.items.length} favoris)`;
+      showToast({
+        message: `Groupe « ${grp.name} »${itemsLabel} supprimé`,
+        onUndo: () => {
+          void bookmarksApi.restoreGroup(snapshot);
+        },
+      });
+    },
+    [bookmarksApi, showToast],
+  );
+
   const activeTab = useMemo<Tab | null>(() => {
     if (!activeId?.startsWith(TAB_DRAG_PREFIX)) return null;
     return (
@@ -169,7 +222,7 @@ export default function App() {
       <header className="flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2.5">
           <Logo size={26} />
-          <h1 className="font-display text-xl font-bold tracking-tight text-gradient-mosaic">
+          <h1 className="font-display text-xl font-bold tracking-tight text-violet-700 dark:text-violet-200">
             Mes Pages
           </h1>
         </div>
@@ -196,7 +249,7 @@ export default function App() {
       >
         <main className="flex flex-col gap-8">
           {!bookmarksApi.loaded ? (
-            <p className="text-base text-ink-500 dark:text-ink-300">Chargement…</p>
+            <p className="text-base text-ink-600 dark:text-ink-200">Chargement…</p>
           ) : (
             <>
               <FavoritesPanel
@@ -210,43 +263,33 @@ export default function App() {
                 autoEditId={assignment.autoEditId}
                 onAutoEditDone={assignment.clearAutoEdit}
                 onRenameBookmark={bookmarksApi.renameBookmark}
-                onRemoveBookmark={bookmarksApi.removeBookmark}
+                onRemoveBookmark={handleRemoveBookmark}
                 onAssignBookmark={assignment.assignBookmark}
                 onRenameGroup={bookmarksApi.renameGroup}
-                onRemoveGroup={bookmarksApi.removeGroup}
+                onRemoveGroup={handleRemoveGroup}
                 onMoveGroup={bookmarksApi.moveGroup}
                 onCreateEmptyGroup={assignment.createEmptyGroup}
                 reorderEnabled={!filter.trim()}
               />
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div
-                  className={
-                    tabsWidth === 'half' ? 'md:col-span-1' : 'md:col-span-2'
-                  }
-                >
-                  <TabsPanel
-                    tabs={filteredTabs}
-                    loading={tabsApi.loading}
-                    groups={bookmarksApi.groups}
-                    groupDotById={groupDotById}
-                    width={tabsWidth}
-                    onToggleWidth={toggleTabsWidth}
-                    onActivate={tabsApi.activate}
-                    onClose={tabsApi.close}
-                    onPinTab={assignment.pinTab}
-                  />
-                </div>
-                <div
-                  className={
-                    notesWidth === 'half' ? 'md:col-span-1' : 'md:col-span-2'
-                  }
-                >
-                  <NotesPanel
-                    width={notesWidth}
-                    onToggleWidth={toggleNotesWidth}
-                  />
-                </div>
+              <div
+                className={
+                  tabsWidth === 'half'
+                    ? 'md:w-1/2 md:pr-2'
+                    : 'w-full'
+                }
+              >
+                <TabsPanel
+                  tabs={filteredTabs}
+                  loading={tabsApi.loading}
+                  groups={bookmarksApi.groups}
+                  groupDotById={groupDotById}
+                  width={tabsWidth}
+                  onToggleWidth={toggleTabsWidth}
+                  onActivate={tabsApi.activate}
+                  onClose={tabsApi.close}
+                  onPinTab={assignment.pinTab}
+                />
               </div>
             </>
           )}

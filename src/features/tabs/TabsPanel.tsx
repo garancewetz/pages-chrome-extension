@@ -50,8 +50,6 @@ export function TabsPanel({
           <IconButton
             variant="square"
             label={toggleLabel}
-            tooltip={width === 'full' ? 'Demi-ligne' : 'Pleine largeur'}
-            tooltipSide="bottom"
             aria-pressed={width === 'half'}
             onClick={onToggleWidth}
             icon={<ToggleIcon size={16} aria-hidden />}
@@ -61,9 +59,9 @@ export function TabsPanel({
 
 
       {loading ? (
-        <p className="text-base text-ink-500 dark:text-ink-300">Chargement…</p>
+        <p className="text-base text-ink-600 dark:text-ink-200">Chargement…</p>
       ) : tabs.length === 0 ? (
-        <p className="text-base text-ink-500 dark:text-ink-300">
+        <p className="text-base text-ink-600 dark:text-ink-200">
           Aucun onglet ne correspond.
         </p>
       ) : (
