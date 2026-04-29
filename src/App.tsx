@@ -170,7 +170,7 @@ export default function App() {
         <div className="flex items-center gap-2.5">
           <Logo size={26} />
           <h1 className="font-display text-xl font-bold tracking-tight text-gradient-mosaic">
-            Mosaïque
+            Mes Pages
           </h1>
         </div>
         <div className="flex items-center gap-2.5 md:w-auto">

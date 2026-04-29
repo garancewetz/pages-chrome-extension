@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Mosaïque",
+  "name": "Mes Pages",
   "version": "0.1.0",
-  "description": "Onglets, favoris et notes en vue mosaïque sur la page Nouvel onglet.",
+  "description": "Mes onglets, mes favoris et mes notes réunis sur la page Nouvel onglet.",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
