@@ -71,8 +71,10 @@ export function GroupCard({
 
   useEffect(() => {
     if (autoEdit && inputRef.current) {
+      // Vide le champ pour laisser apparaître le placeholder (« Nouveau groupe »)
+      // afin que l'utilisateur puisse taper directement sans rien effacer.
+      setName('');
       inputRef.current.focus();
-      inputRef.current.select();
       onAutoEditDone?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,6 +129,7 @@ export function GroupCard({
           <input
             ref={inputRef}
             value={name}
+            placeholder={group.name}
             onChange={(e) => setName(e.target.value)}
             onBlur={commit}
             onFocus={(e) => e.target.select()}

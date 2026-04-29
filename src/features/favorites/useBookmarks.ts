@@ -196,7 +196,10 @@ function walkFolderTree(
   }
   subfolders.sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
 
-  if (directUrls.length > 0) {
+  // Affiche le dossier s'il contient des URLs, ou s'il est feuille (vide).
+  // Un dossier qui ne contient que des sous-dossiers reste masqué : ses
+  // sous-dossiers apparaîtront comme groupes séparés via la récursion.
+  if (directUrls.length > 0 || subfolders.length === 0) {
     groups.push({
       id: folder.id,
       name: displayName,
