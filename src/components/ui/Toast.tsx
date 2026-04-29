@@ -21,7 +21,7 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const DEFAULT_DURATION_MS = 8000;
+const DEFAULT_DURATION_MS = 5000;
 
 type ActiveToast = {
   id: number;
