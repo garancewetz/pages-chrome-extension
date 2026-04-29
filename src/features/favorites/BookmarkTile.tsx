@@ -3,20 +3,30 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Bookmark as BookmarkIcon,
-  GripVertical,
+  FolderPlus,
   Pencil,
+  Star,
   Trash2,
 } from 'lucide-react';
-import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
+import { GroupDot } from '../../components/ui/GroupDot';
+import { PortalTooltip } from '../../components/ui/PortalTooltip';
+import {
+  TileActionsMenu,
+  type TileActionsItem,
+} from '../../components/ui/TileActionsMenu';
 import { Tile, TileBody, TilePreview, tileCornerInner } from '../../components/ui/Tile';
 import { isExtension } from '../../lib/chrome';
 import { getFavicon } from '../../lib/url';
-import type { Bookmark } from './useBookmarks';
+import type { AssignTarget, Bookmark, Group } from './useBookmarks';
 
 type Props = {
   bookmark: Bookmark;
+  groups: Group[];
+  groupDotById: Record<string, string>;
+  favoritesRootId: string;
   onRename: (id: string, title: string) => void;
   onRemove: (id: string) => void;
+  onAssign: (id: string, target: AssignTarget) => void;
 };
 
 function openBookmark(url: string): void {
@@ -50,7 +60,15 @@ function Favicon({ url, fallbackSize = 24 }: { url: string; fallbackSize?: numbe
   );
 }
 
-export function BookmarkTile({ bookmark, onRename, onRemove }: Props) {
+export function BookmarkTile({
+  bookmark,
+  groups,
+  groupDotById,
+  favoritesRootId,
+  onRename,
+  onRemove,
+  onAssign,
+}: Props) {
   const [editing, setEditing] = useState(false);
   const [draftTitle, setDraftTitle] = useState(bookmark.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -124,48 +142,76 @@ export function BookmarkTile({ bookmark, onRename, onRemove }: Props) {
     </span>
   );
 
+  const menuItems: TileActionsItem[] = [
+    { kind: 'group-header', key: 'h-move', label: 'Ranger dans' },
+    ...(bookmark.parentId !== favoritesRootId
+      ? [
+          {
+            kind: 'action' as const,
+            key: 'move-root',
+            label: 'Hors groupe',
+            icon: <Star size={16} aria-hidden />,
+            onSelect: () => onAssign(bookmark.id, { type: 'root' }),
+          },
+        ]
+      : []),
+    ...groups
+      .filter((g) => g.id !== bookmark.parentId)
+      .map<TileActionsItem>((g) => ({
+        kind: 'action',
+        key: `move-${g.id}`,
+        label: g.name,
+        icon: <GroupDot color={groupDotById[g.id] ?? '#94a3b8'} />,
+        onSelect: () => onAssign(bookmark.id, { type: 'group', groupId: g.id }),
+      })),
+    {
+      kind: 'action',
+      key: 'move-new',
+      label: 'Nouveau groupe…',
+      icon: <FolderPlus size={16} aria-hidden />,
+      onSelect: () => onAssign(bookmark.id, { type: 'new-group' }),
+    },
+    { kind: 'divider', key: 'd1' },
+    {
+      kind: 'action',
+      key: 'remove',
+      label: 'Supprimer ce favori',
+      icon: <Trash2 size={16} aria-hidden />,
+      onSelect: () => onRemove(bookmark.id),
+      danger: true,
+      confirmLabel: 'Cliquer pour confirmer',
+    },
+  ];
+
   return (
     <Tile
       ref={setNodeRef}
       style={style}
       onActivate={editing ? undefined : () => openBookmark(bookmark.url)}
       activateLabel={`Ouvrir ${bookmark.title}`}
+      dragAttributes={editing ? undefined : attributes}
+      dragListeners={editing ? undefined : listeners}
       topLeft={
         editing ? null : (
-          <button
-            type="button"
-            aria-label={`Déplacer ${bookmark.title}`}
-            {...attributes}
-            {...listeners}
-            className={`${tileCornerInner} touch-none cursor-grab hover:bg-white dark:hover:bg-ink-700`}
-          >
-            <GripVertical size={13} aria-hidden />
-          </button>
-        )
-      }
-      topRight={
-        editing ? null : (
-          <ConfirmIconButton
-            onConfirm={() => onRemove(bookmark.id)}
-            idleIcon={<Trash2 size={13} aria-hidden />}
-            idleLabel={`Supprimer ${bookmark.title}`}
-            confirmLabel={`Confirmer la suppression de ${bookmark.title}`}
-            tooltip="Supprimer"
-            className={tileCornerInner}
-            idleClassName="hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-200"
-          />
+          <PortalTooltip label="Renommer">
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              aria-label={`Renommer ${bookmark.title}`}
+              className={`${tileCornerInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
+            >
+              <Pencil size={13} aria-hidden />
+            </button>
+          </PortalTooltip>
         )
       }
       bottomRight={
         editing ? null : (
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            aria-label={`Renommer ${bookmark.title}`}
-            className={`${tileCornerInner} hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-500/20 dark:hover:text-violet-200`}
-          >
-            <Pencil size={13} aria-hidden />
-          </button>
+          <TileActionsMenu
+            items={menuItems}
+            triggerLabel={`Modifier le favori ${bookmark.title}`}
+            triggerTooltip="Modifier ce favori"
+          />
         )
       }
     >

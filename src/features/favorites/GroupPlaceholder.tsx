@@ -2,9 +2,13 @@ import { useDroppable } from '@dnd-kit/core';
 import { FolderPlus } from 'lucide-react';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
 
-const LABEL = 'Glisser ici pour créer un nouveau groupe';
+const DRAG_HINT = 'ou glissez ici un onglet ou un favori';
 
-export function GroupPlaceholder() {
+type Props = {
+  onCreate: () => void;
+};
+
+export function GroupPlaceholder({ onCreate }: Props) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'placeholder:group',
     data: { type: 'placeholder' },
@@ -13,28 +17,25 @@ export function GroupPlaceholder() {
   const isReady = isBookmarkDropTarget(dragType) && !isOver;
 
   const containerClass = isOver
-    ? 'border-violet-500 bg-violet-100/70 text-violet-800 dark:border-violet-300 dark:bg-violet-500/15 dark:text-violet-100'
+    ? 'border-violet-500 bg-violet-100/70 dark:border-violet-300 dark:bg-violet-500/15'
     : isReady
-      ? 'border-violet-400/70 bg-violet-50/50 text-violet-700 dark:border-violet-300/40 dark:bg-violet-500/10 dark:text-violet-100'
-      : 'border-ink-300/70 bg-white/30 text-ink-500 dark:border-ink-700/60 dark:bg-white/[0.03] dark:text-ink-300';
-  const iconClass = isOver
-    ? 'bg-violet-500 text-white shadow-glow-violet'
-    : isReady
-      ? 'bg-violet-200/70 text-violet-700 dark:bg-violet-500/25 dark:text-violet-100'
-      : 'bg-white/70 text-ink-600 dark:bg-white/10 dark:text-ink-200';
+      ? 'border-violet-400/70 bg-violet-50/50 dark:border-violet-300/40 dark:bg-violet-500/10'
+      : 'border-ink-300/70 bg-white/30 dark:border-ink-700/60 dark:bg-white/[0.03]';
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[80px] items-center justify-center gap-2.5 rounded-xl border-2 border-dashed px-4 py-3 text-center text-sm font-medium backdrop-blur-md transition-colors ${containerClass}`}
-      aria-label={LABEL}
+      className={`flex min-h-[80px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 text-center backdrop-blur-md transition-colors ${containerClass}`}
     >
-      <span
-        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${iconClass}`}
+      <button
+        type="button"
+        onClick={onCreate}
+        className="inline-flex items-center gap-2 rounded-lg border-2 border-violet-300 bg-white px-3 py-1.5 text-sm font-semibold text-violet-700 shadow-sm transition-colors hover:border-violet-500 hover:bg-violet-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-violet-300/40 dark:bg-ink-800 dark:text-violet-100 dark:hover:border-violet-300 dark:hover:bg-violet-500/15"
       >
         <FolderPlus size={16} aria-hidden />
-      </span>
-      <span>{LABEL}</span>
+        Nouveau groupe
+      </button>
+      <span className="text-xs text-ink-500 dark:text-ink-300">{DRAG_HINT}</span>
     </div>
   );
 }

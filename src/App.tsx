@@ -28,23 +28,16 @@ import {
   type BookmarksApi,
   type Group,
 } from './features/favorites/useBookmarks';
+import {
+  resolveDropPosition,
+  useAssignment,
+  type DragSource,
+  type DropTarget,
+} from './features/favorites/useAssignment';
 import { useBlockWidth, useBlockWidthMap } from './lib/widths';
-import { useGroupColorMap } from './lib/groupColors';
-
-type DragSource =
-  | { type: 'tab'; tab: Tab }
-  | { type: 'bookmark'; bookmark: Bookmark };
-
-type DropTarget =
-  | { type: 'favorites-root' }
-  | { type: 'group'; groupId: string }
-  | { type: 'bookmark'; bookmark: Bookmark }
-  | { type: 'placeholder' };
-
-type DropPosition = { parentId: string; index: number };
+import { getColor, useGroupColorMap } from './lib/groupColors';
 
 const TAB_DRAG_PREFIX = 'tab:';
-const NEW_GROUP_NAME = 'Nouveau groupe';
 
 function buildMatcher(query: string): (title: string, url: string) => boolean {
   const trimmed = query.trim().toLowerCase();
@@ -64,59 +57,12 @@ function findBookmark(api: BookmarksApi, id: string): Bookmark | undefined {
   return undefined;
 }
 
-function findGroup(api: BookmarksApi, id: string): Group | undefined {
-  return api.groups.find((g) => g.id === id);
-}
-
-function resolveDropPosition(
-  target: DropTarget | undefined,
-  api: BookmarksApi,
-): DropPosition | null {
-  if (!target) return null;
-  if (target.type === 'favorites-root') {
-    // Insert after the last individual bookmark (by Chrome index) so folders
-    // stay after all URLs even when Chrome has them interleaved.
-    const rootItems = api.favoriteItems.filter(
-      (b) => b.parentId === api.favoritesRootId,
-    );
-    const lastItem = rootItems.at(-1);
-    return {
-      parentId: api.favoritesRootId,
-      index: lastItem ? lastItem.index + 1 : 0,
-    };
-  }
-  if (target.type === 'group') {
-    const group = findGroup(api, target.groupId);
-    return { parentId: target.groupId, index: group?.items.length ?? 0 };
-  }
-  if (target.type === 'bookmark') {
-    const { bookmark } = target;
-    // Use the bookmark's actual Chrome index so the move lands at the correct
-    // position even when folders are interleaved with URLs in Chrome's tree.
-    if (
-      api.rootBookmarkFolderIds.includes(bookmark.parentId) ||
-      findGroup(api, bookmark.parentId)
-    ) {
-      return { parentId: bookmark.parentId, index: bookmark.index };
-    }
-    const rootItems = api.favoriteItems.filter(
-      (b) => b.parentId === api.favoritesRootId,
-    );
-    const lastItem = rootItems.at(-1);
-    return {
-      parentId: api.favoritesRootId,
-      index: lastItem ? lastItem.index + 1 : 0,
-    };
-  }
-  return null;
-}
-
 export default function App() {
   const [filter, setFilter] = useState('');
   const tabsApi = useTabs();
   const bookmarksApi = useBookmarks();
+  const assignment = useAssignment(bookmarksApi);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [autoEditId, setAutoEditId] = useState<string | null>(null);
   const [tabsWidth, toggleTabsWidth] = useBlockWidth(
     'mosaic.tabsWidth',
     'full',
@@ -137,6 +83,14 @@ export default function App() {
     const matches = buildMatcher(filter);
     return bookmarksApi.favoriteItems.filter((b) => matches(b.title, b.url));
   }, [bookmarksApi.favoriteItems, filter]);
+
+  const groupDotById = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    bookmarksApi.groups.forEach((g, i) => {
+      map[g.id] = getColor(groupColors.getColorId(g.id, i)).dot;
+    });
+    return map;
+  }, [bookmarksApi.groups, groupColors]);
 
   const filteredGroups = useMemo<Group[]>(() => {
     if (!filter.trim()) return bookmarksApi.groups;
@@ -164,20 +118,6 @@ export default function App() {
 
   const handleDragCancel = (): void => setActiveId(null);
 
-  const createGroupFromDrop = async (source: DragSource): Promise<void> => {
-    const newId = await bookmarksApi.addGroup(NEW_GROUP_NAME);
-    if (!newId) return;
-    if (source.type === 'tab') {
-      await bookmarksApi.addBookmark(newId, {
-        title: source.tab.title,
-        url: source.tab.url,
-      });
-    } else {
-      await bookmarksApi.moveBookmark(source.bookmark.id, newId, 0);
-    }
-    setAutoEditId(newId);
-  };
-
   const handleDragEnd = (event: DragEndEvent): void => {
     setActiveId(null);
     const { active, over } = event;
@@ -188,7 +128,7 @@ export default function App() {
     const target = over.data.current as DropTarget | undefined;
 
     if (target?.type === 'placeholder') {
-      void createGroupFromDrop(source);
+      void assignment.createGroupFromDrop(source);
       return;
     }
 
@@ -229,7 +169,7 @@ export default function App() {
       <header className="flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2.5">
           <Logo size={26} />
-          <h1 className="font-display text-xl font-bold tracking-tight bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text text-transparent dark:from-violet-300 dark:via-fuchsia-300 dark:to-rose-300">
+          <h1 className="font-display text-xl font-bold tracking-tight text-gradient-mosaic">
             Mosaïque
           </h1>
         </div>
@@ -262,15 +202,20 @@ export default function App() {
               <FavoritesPanel
                 items={filteredFavoriteItems}
                 groups={filteredGroups}
+                allGroups={bookmarksApi.groups}
+                groupDotById={groupDotById}
+                favoritesRootId={bookmarksApi.favoritesRootId}
                 groupWidths={groupWidths}
                 groupColors={groupColors}
-                autoEditId={autoEditId}
-                onAutoEditDone={() => setAutoEditId(null)}
+                autoEditId={assignment.autoEditId}
+                onAutoEditDone={assignment.clearAutoEdit}
                 onRenameBookmark={bookmarksApi.renameBookmark}
                 onRemoveBookmark={bookmarksApi.removeBookmark}
+                onAssignBookmark={assignment.assignBookmark}
                 onRenameGroup={bookmarksApi.renameGroup}
                 onRemoveGroup={bookmarksApi.removeGroup}
                 onMoveGroup={bookmarksApi.moveGroup}
+                onCreateEmptyGroup={assignment.createEmptyGroup}
                 reorderEnabled={!filter.trim()}
               />
 
@@ -283,10 +228,13 @@ export default function App() {
                   <TabsPanel
                     tabs={filteredTabs}
                     loading={tabsApi.loading}
+                    groups={bookmarksApi.groups}
+                    groupDotById={groupDotById}
                     width={tabsWidth}
                     onToggleWidth={toggleTabsWidth}
                     onActivate={tabsApi.activate}
                     onClose={tabsApi.close}
+                    onPinTab={assignment.pinTab}
                   />
                 </div>
                 <div
@@ -315,4 +263,3 @@ export default function App() {
     </div>
   );
 }
-

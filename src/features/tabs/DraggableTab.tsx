@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import { useDraggable } from '@dnd-kit/core';
-import { Globe, GripVertical, X } from 'lucide-react';
+import { FolderPlus, Globe, Star, X } from 'lucide-react';
 import { ConfirmIconButton } from '../../components/ui/ConfirmIconButton';
+import { GroupDot } from '../../components/ui/GroupDot';
+import {
+  TileActionsMenu,
+  type TileActionsItem,
+} from '../../components/ui/TileActionsMenu';
 import { Tile, TileBody, TilePreview, tileCornerInner } from '../../components/ui/Tile';
 import { getFavicon } from '../../lib/url';
+import type { AssignTarget, Group } from '../../features/favorites/useBookmarks';
 import type { Tab } from './useTabs';
 
 type Props = {
   tab: Tab;
+  groups: Group[];
+  groupDotById: Record<string, string>;
   onActivate: (t: Tab) => void;
   onClose: (t: Tab) => void;
+  onPin: (tab: Tab, target: AssignTarget) => void;
 };
 
 function TabFavicon({ tab }: { tab: Tab }) {
@@ -28,7 +37,14 @@ function TabFavicon({ tab }: { tab: Tab }) {
   );
 }
 
-export function DraggableTab({ tab, onActivate, onClose }: Props) {
+export function DraggableTab({
+  tab,
+  groups,
+  groupDotById,
+  onActivate,
+  onClose,
+  onPin,
+}: Props) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `tab:${tab.id}`,
     data: { type: 'tab', tab },
@@ -44,23 +60,39 @@ export function DraggableTab({ tab, onActivate, onClose }: Props) {
     </span>
   );
 
+  const menuItems: TileActionsItem[] = [
+    { kind: 'group-header', key: 'h-pin', label: 'Épingler dans' },
+    {
+      kind: 'action',
+      key: 'pin-root',
+      label: 'Hors groupe',
+      icon: <Star size={16} aria-hidden />,
+      onSelect: () => onPin(tab, { type: 'root' }),
+    },
+    ...groups.map<TileActionsItem>((g) => ({
+      kind: 'action',
+      key: `pin-${g.id}`,
+      label: g.name,
+      icon: <GroupDot color={groupDotById[g.id] ?? '#94a3b8'} />,
+      onSelect: () => onPin(tab, { type: 'group', groupId: g.id }),
+    })),
+    {
+      kind: 'action',
+      key: 'pin-new',
+      label: 'Nouveau groupe…',
+      icon: <FolderPlus size={16} aria-hidden />,
+      onSelect: () => onPin(tab, { type: 'new-group' }),
+    },
+  ];
+
   return (
     <Tile
       ref={setNodeRef}
       style={style}
       onActivate={() => onActivate(tab)}
       activateLabel={`Activer l'onglet ${tab.title}`}
-      topLeft={
-        <button
-          type="button"
-          aria-label={`Déplacer ${tab.title}`}
-          {...attributes}
-          {...listeners}
-          className={`${tileCornerInner} touch-none cursor-grab hover:bg-white dark:hover:bg-ink-700`}
-        >
-          <GripVertical size={13} aria-hidden />
-        </button>
-      }
+      dragAttributes={attributes}
+      dragListeners={listeners}
       topRight={
         <ConfirmIconButton
           onConfirm={() => onClose(tab)}
@@ -70,6 +102,13 @@ export function DraggableTab({ tab, onActivate, onClose }: Props) {
           tooltip="Fermer"
           className={tileCornerInner}
           idleClassName="hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-200"
+        />
+      }
+      bottomRight={
+        <TileActionsMenu
+          items={menuItems}
+          triggerLabel={`Épingler l'onglet ${tab.title}`}
+          triggerTooltip="Épingler cet onglet"
         />
       }
     >

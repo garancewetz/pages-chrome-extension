@@ -57,6 +57,12 @@ export type Group = {
   items: Bookmark[];
 };
 
+/** Cible pour assigner un favori ou épingler un onglet sans drag. */
+export type AssignTarget =
+  | { type: 'root' }
+  | { type: 'group'; groupId: string }
+  | { type: 'new-group' };
+
 type BookmarkModel = {
   favoriteItems: Bookmark[];
   groups: Group[];

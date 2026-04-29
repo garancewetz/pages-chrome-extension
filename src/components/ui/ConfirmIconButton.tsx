@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Check } from 'lucide-react';
-import { Tooltip } from './Tooltip';
+import { PortalTooltip } from './PortalTooltip';
 
 type Props = {
   onConfirm: () => void;
@@ -62,9 +62,7 @@ export function ConfirmIconButton({
     if (!wrapperClassName) return button;
     return <span className={wrapperClassName}>{button}</span>;
   }
-  return (
-    <Tooltip label={tooltip} side={tooltipSide} className={wrapperClassName}>
-      {button}
-    </Tooltip>
-  );
+  const wrapped = <PortalTooltip label={tooltip} side={tooltipSide}>{button}</PortalTooltip>;
+  if (!wrapperClassName) return wrapped;
+  return <span className={wrapperClassName}>{wrapped}</span>;
 }

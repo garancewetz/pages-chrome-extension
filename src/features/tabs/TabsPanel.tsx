@@ -4,23 +4,30 @@ import { DraggableTab } from './DraggableTab';
 import { IconButton } from '../../components/ui/IconButton';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import type { BlockWidth } from '../../lib/widths';
+import type { AssignTarget, Group } from '../favorites/useBookmarks';
 
 type TabsPanelProps = {
   tabs: Tab[];
   loading: boolean;
+  groups: Group[];
+  groupDotById: Record<string, string>;
   width: BlockWidth;
   onToggleWidth: () => void;
   onActivate: (t: Tab) => void;
   onClose: (t: Tab) => void;
+  onPinTab: (tab: Tab, target: AssignTarget) => void;
 };
 
 export function TabsPanel({
   tabs,
   loading,
+  groups,
+  groupDotById,
   width,
   onToggleWidth,
   onActivate,
   onClose,
+  onPinTab,
 }: TabsPanelProps) {
   const ToggleIcon = width === 'full' ? RectangleHorizontal : Columns2;
   const toggleLabel =
@@ -65,8 +72,11 @@ export function TabsPanel({
             <DraggableTab
               key={tab.id}
               tab={tab}
+              groups={groups}
+              groupDotById={groupDotById}
               onActivate={onActivate}
               onClose={onClose}
+              onPin={onPinTab}
             />
           ))}
         </ul>

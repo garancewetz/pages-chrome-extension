@@ -10,13 +10,15 @@ type Props = {
 };
 
 export function NotesPanel({ width, onToggleWidth }: Props) {
-  const { note, save, loaded } = useNotes();
+  const { note, save, loaded, saving } = useNotes();
 
   const ToggleIcon = width === 'full' ? RectangleHorizontal : Columns2;
   const toggleLabel =
     width === 'full'
       ? 'Mettre la note rapide sur une demi-ligne'
       : 'Mettre la note rapide sur une ligne complète';
+
+  const status = !loaded ? '…' : saving ? 'enregistrement…' : 'enregistré';
 
   return (
     <section className="flex flex-col gap-3">
@@ -26,8 +28,11 @@ export function NotesPanel({ width, onToggleWidth }: Props) {
         accent="amber"
         actions={
           <span className="flex items-center gap-2.5">
-            <span className="text-sm text-ink-400 dark:text-ink-300">
-              {loaded ? 'enregistré' : '…'}
+            <span
+              aria-live="polite"
+              className="text-sm text-ink-400 dark:text-ink-300"
+            >
+              {status}
             </span>
             <IconButton
               variant="square"

@@ -1,4 +1,8 @@
 import { forwardRef, type CSSProperties, type ReactNode } from 'react';
+import type {
+  DraggableAttributes,
+  DraggableSyntheticListeners,
+} from '@dnd-kit/core';
 import { getHostname } from '../../lib/url';
 
 // Bouton de coin (utilisé par BookmarkTile / DraggableTab via les slots de Tile).
@@ -19,6 +23,9 @@ type TileProps = {
   bottomRight?: ReactNode;
   onActivate?: () => void;
   activateLabel?: string;
+  /** dnd-kit listeners et attributes appliqués au bouton activate, qui devient draggable. */
+  dragListeners?: DraggableSyntheticListeners;
+  dragAttributes?: DraggableAttributes;
   style?: CSSProperties;
   className?: string;
 };
@@ -31,6 +38,8 @@ export const Tile = forwardRef<HTMLLIElement, TileProps>(function Tile(
     bottomRight,
     onActivate,
     activateLabel,
+    dragListeners,
+    dragAttributes,
     style,
     className,
   },
@@ -47,6 +56,8 @@ export const Tile = forwardRef<HTMLLIElement, TileProps>(function Tile(
           type="button"
           onClick={onActivate}
           aria-label={activateLabel}
+          {...dragAttributes}
+          {...dragListeners}
           className="absolute inset-0 z-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         />
       ) : null}

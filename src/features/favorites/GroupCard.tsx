@@ -17,17 +17,21 @@ import { IconButton } from '../../components/ui/IconButton';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
 import { getColor, type GroupColorId } from '../../lib/groupColors';
-import type { Group } from './useBookmarks';
+import type { AssignTarget, Group } from './useBookmarks';
 import type { BlockWidth } from '../../lib/widths';
 
 type Props = {
   group: Group;
   width: BlockWidth;
+  allGroups: Group[];
+  groupDotById: Record<string, string>;
+  favoritesRootId: string;
   onToggleWidth: () => void;
   autoEdit?: boolean;
   onAutoEditDone?: () => void;
   onRenameBookmark: (id: string, title: string) => void;
   onRemoveBookmark: (id: string) => void;
+  onAssignBookmark: (id: string, target: AssignTarget) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
   onMoveGroup?: (id: string, direction: 'up' | 'down') => void;
@@ -40,11 +44,15 @@ type Props = {
 export function GroupCard({
   group,
   width,
+  allGroups,
+  groupDotById,
+  favoritesRootId,
   onToggleWidth,
   autoEdit = false,
   onAutoEditDone,
   onRenameBookmark,
   onRemoveBookmark,
+  onAssignBookmark,
   onRenameGroup,
   onRemoveGroup,
   onMoveGroup,
@@ -208,8 +216,12 @@ export function GroupCard({
               <BookmarkTile
                 key={b.id}
                 bookmark={b}
+                groups={allGroups}
+                groupDotById={groupDotById}
+                favoritesRootId={favoritesRootId}
                 onRename={onRenameBookmark}
                 onRemove={onRemoveBookmark}
+                onAssign={onAssignBookmark}
               />
             ))
           )}

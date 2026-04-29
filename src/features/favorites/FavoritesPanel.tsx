@@ -8,37 +8,49 @@ import { EmptyDropZone } from '../../components/ui/EmptyDropZone';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { SubsectionTitle } from '../../components/ui/SubsectionTitle';
 import { isBookmarkDropTarget, useActiveDragType } from '../../lib/dnd';
-import type { Bookmark, Group } from './useBookmarks';
+import type { AssignTarget, Bookmark, Group } from './useBookmarks';
 import type { BlockWidthMap } from '../../lib/widths';
 import type { GroupColorMap } from '../../lib/groupColors';
 
 type Props = {
   items: Bookmark[];
   groups: Group[];
+  /** Liste complète (non filtrée) — utilisée pour les menus d'assignation. */
+  allGroups: Group[];
+  /** Couleur (hex dot) par id de groupe — pour les pastilles dans les menus. */
+  groupDotById: Record<string, string>;
+  favoritesRootId: string;
   groupWidths: BlockWidthMap;
   groupColors: GroupColorMap;
   autoEditId: string | null;
   onAutoEditDone: () => void;
   onRenameBookmark: (id: string, title: string) => void;
   onRemoveBookmark: (id: string) => void;
+  onAssignBookmark: (id: string, target: AssignTarget) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
   onMoveGroup: (id: string, direction: 'up' | 'down') => void;
+  onCreateEmptyGroup: () => void;
   reorderEnabled: boolean;
 };
 
 export function FavoritesPanel({
   items,
   groups,
+  allGroups,
+  groupDotById,
+  favoritesRootId,
   groupWidths,
   groupColors,
   autoEditId,
   onAutoEditDone,
   onRenameBookmark,
   onRemoveBookmark,
+  onAssignBookmark,
   onRenameGroup,
   onRemoveGroup,
   onMoveGroup,
+  onCreateEmptyGroup,
   reorderEnabled,
 }: Props) {
   const { setNodeRef, isOver } = useDroppable({
@@ -86,8 +98,12 @@ export function FavoritesPanel({
                 <BookmarkTile
                   key={b.id}
                   bookmark={b}
+                  groups={allGroups}
+                  groupDotById={groupDotById}
+                  favoritesRootId={favoritesRootId}
                   onRename={onRenameBookmark}
                   onRemove={onRemoveBookmark}
+                  onAssign={onAssignBookmark}
                 />
               ))
             )}
@@ -108,11 +124,15 @@ export function FavoritesPanel({
                 <GroupCard
                   group={g}
                   width={w}
+                  allGroups={allGroups}
+                  groupDotById={groupDotById}
+                  favoritesRootId={favoritesRootId}
                   onToggleWidth={() => groupWidths.toggle(g.id)}
                   autoEdit={autoEditId === g.id}
                   onAutoEditDone={onAutoEditDone}
                   onRenameBookmark={onRenameBookmark}
                   onRemoveBookmark={onRemoveBookmark}
+                  onAssignBookmark={onAssignBookmark}
                   onRenameGroup={onRenameGroup}
                   onRemoveGroup={onRemoveGroup}
                   onMoveGroup={reorderEnabled ? onMoveGroup : undefined}
@@ -124,7 +144,7 @@ export function FavoritesPanel({
               </div>
             );
           })}
-          <GroupPlaceholder />
+          <GroupPlaceholder onCreate={onCreateEmptyGroup} />
         </div>
       </div>
     </section>
