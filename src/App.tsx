@@ -12,15 +12,23 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { History } from 'lucide-react';
 import { GoogleSearch } from './components/GoogleSearch';
 import { Logo } from './components/ui/Logo';
 import { SearchBar } from './components/ui/SearchBar';
-import { ThemeToggle } from './components/ui/ThemeToggle';
-import { ToastProvider, useToast } from './components/ui/Toast';
+import {
+  ConfirmDialogProvider,
+  useConfirm,
+} from './components/ui/ConfirmDialog';
 import { FavoritesPanel } from './features/favorites/FavoritesPanel';
-import { TabsPanel } from './features/tabs/TabsPanel';
-import { TabPreview } from './features/tabs/DraggableTab';
+import { TabsSidePanel } from './features/tabs/TabsSidePanel';
+import { TabRowPreview } from './features/tabs/TabRow';
 import { BookmarkPreview } from './features/favorites/BookmarkTile';
+import { HistoryPanel } from './features/history/HistoryPanel';
+import {
+  useDeletionHistory,
+  type DeletionEntry,
+} from './features/history/useDeletionHistory';
 import { useTabs, type Tab } from './features/tabs/useTabs';
 import {
   useBookmarks,
@@ -34,7 +42,7 @@ import {
   type DragSource,
   type DropTarget,
 } from './features/favorites/useAssignment';
-import { useBlockWidth, useBlockWidthMap } from './lib/widths';
+import { useBlockWidthMap } from './lib/widths';
 import { getColor, useGroupColorMap } from './lib/groupColors';
 
 const TAB_DRAG_PREFIX = 'tab:';
@@ -59,23 +67,21 @@ function findBookmark(api: BookmarksApi, id: string): Bookmark | undefined {
 
 export default function App() {
   return (
-    <ToastProvider>
+    <ConfirmDialogProvider>
       <AppContent />
-    </ToastProvider>
+    </ConfirmDialogProvider>
   );
 }
 
 function AppContent() {
-  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [filter, setFilter] = useState('');
   const tabsApi = useTabs();
   const bookmarksApi = useBookmarks();
   const assignment = useAssignment(bookmarksApi);
+  const history = useDeletionHistory();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [tabsWidth, toggleTabsWidth] = useBlockWidth(
-    'mosaic.tabsWidth',
-    'full',
-  );
   const groupWidths = useBlockWidthMap('mosaic.groupWidths', 'half');
   const groupColors = useGroupColorMap('mosaic.groupColors');
 
@@ -161,47 +167,57 @@ function AppContent() {
       const bm = findBookmark(bookmarksApi, id);
       void bookmarksApi.removeBookmark(id);
       if (!bm) return;
-      const snapshot = {
+      history.recordBookmark(id, {
         title: bm.title,
         url: bm.url,
         parentId: bm.parentId,
         index: bm.index,
-      };
-      showToast({
-        message: `« ${bm.title || 'Favori'} » supprimé`,
-        onUndo: () => {
-          void bookmarksApi.restoreBookmark(snapshot);
-        },
       });
     },
-    [bookmarksApi, showToast],
+    [bookmarksApi, history],
   );
 
   const handleRemoveGroup = useCallback(
     (id: string): void => {
       const grp = bookmarksApi.groups.find((g) => g.id === id);
-      void bookmarksApi.removeGroup(id);
       if (!grp) return;
-      const snapshot = {
-        name: grp.name,
-        parentId: grp.parentId,
-        index: grp.index,
-        items: grp.items.map(({ title, url }) => ({ title, url })),
-      };
       const itemsLabel =
         grp.items.length === 0
           ? ''
           : grp.items.length === 1
-            ? ' (1 favori)'
-            : ` (${grp.items.length} favoris)`;
-      showToast({
-        message: `Groupe « ${grp.name} »${itemsLabel} supprimé`,
-        onUndo: () => {
-          void bookmarksApi.restoreGroup(snapshot);
-        },
+            ? ' et son 1 favori'
+            : ` et ses ${grp.items.length} favoris`;
+      void confirm({
+        title: `Supprimer le groupe « ${grp.name} » ?`,
+        description: `Le groupe${itemsLabel} sera supprimé. Vous pourrez le récupérer dans l'historique.`,
+        confirmLabel: 'Oui, supprimer',
+        cancelLabel: 'Non, garder',
+        danger: true,
+      }).then((ok) => {
+        if (!ok) return;
+        const snapshot = {
+          name: grp.name,
+          parentId: grp.parentId,
+          index: grp.index,
+          items: grp.items.map(({ title, url }) => ({ title, url })),
+        };
+        history.recordGroup(id, snapshot);
+        void bookmarksApi.removeGroup(id);
       });
     },
-    [bookmarksApi, showToast],
+    [bookmarksApi, confirm, history],
+  );
+
+  const handleRestoreFromHistory = useCallback(
+    (entry: DeletionEntry): void => {
+      if (entry.kind === 'bookmark') {
+        void bookmarksApi.restoreBookmark(entry.snapshot);
+      } else {
+        void bookmarksApi.restoreGroup(entry.snapshot);
+      }
+      history.remove(entry.id);
+    },
+    [bookmarksApi, history],
   );
 
   const activeTab = useMemo<Tab | null>(() => {
@@ -218,91 +234,99 @@ function AppContent() {
   }, [activeId, bookmarksApi]);
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-5 px-5 pb-8 pt-3 md:px-8">
-      <header className="flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2.5">
-          <Logo size={26} />
-          <h1 className="font-display text-xl font-bold tracking-tight text-violet-700 dark:text-violet-200">
-            Mes Pages
-          </h1>
-        </div>
-        <div className="flex items-center gap-2.5 md:w-auto">
-          <div className="flex-1 md:w-80">
-            <SearchBar
-              value={filter}
-              onChange={setFilter}
-              placeholder="Rechercher dans les favoris et onglets…"
-            />
+    <DndContext
+      sensors={sensors}
+      collisionDetection={collisionDetection}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      <div className="flex min-h-screen items-start">
+        <TabsSidePanel
+          tabs={filteredTabs}
+          loading={tabsApi.loading}
+          groups={bookmarksApi.groups}
+          groupDotById={groupDotById}
+          onActivate={tabsApi.activate}
+          onClose={tabsApi.close}
+          onPinTab={assignment.pinTab}
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 pb-8 pt-3 md:px-8">
+            <header className="flex flex-col gap-2.5 px-4 py-2.5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2.5">
+            <Logo size={26} />
+            <h1 className="font-display text-xl font-bold tracking-tight text-violet-700 dark:text-violet-200">
+              Mes Pages
+            </h1>
           </div>
-          <ThemeToggle />
-        </div>
-      </header>
+          <div className="flex items-center gap-2.5 md:w-auto">
+            <div className="flex-1 md:w-80">
+              <SearchBar
+                value={filter}
+                onChange={setFilter}
+                placeholder="Rechercher dans les favoris et onglets…"
+              />
+            </div>
+            <button
+              type="button"
+              aria-label="Ouvrir l'historique des suppressions"
+              onClick={() => setHistoryOpen(true)}
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border-2 border-ink-200 bg-white text-ink-500 transition-colors hover:border-violet-400 hover:text-ink-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-300 dark:hover:border-violet-300 dark:hover:text-ink-50"
+            >
+              <History size={18} aria-hidden />
+            </button>
+          </div>
+        </header>
 
-      <GoogleSearch />
+        <GoogleSearch />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={collisionDetection}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
         <main className="flex flex-col gap-8">
           {!bookmarksApi.loaded ? (
-            <p className="text-base text-ink-600 dark:text-ink-200">Chargement…</p>
+            <p className="text-base text-ink-600 dark:text-ink-200">
+              Chargement…
+            </p>
           ) : (
-            <>
-              <FavoritesPanel
-                items={filteredFavoriteItems}
-                groups={filteredGroups}
-                allGroups={bookmarksApi.groups}
-                groupDotById={groupDotById}
-                favoritesRootId={bookmarksApi.favoritesRootId}
-                groupWidths={groupWidths}
-                groupColors={groupColors}
-                autoEditId={assignment.autoEditId}
-                onAutoEditDone={assignment.clearAutoEdit}
-                onRenameBookmark={bookmarksApi.renameBookmark}
-                onRemoveBookmark={handleRemoveBookmark}
-                onAssignBookmark={assignment.assignBookmark}
-                onRenameGroup={bookmarksApi.renameGroup}
-                onRemoveGroup={handleRemoveGroup}
-                onMoveGroup={bookmarksApi.moveGroup}
-                onCreateEmptyGroup={assignment.createEmptyGroup}
-                reorderEnabled={!filter.trim()}
-              />
-
-              <div
-                className={
-                  tabsWidth === 'half'
-                    ? 'md:w-1/2 md:pr-2'
-                    : 'w-full'
-                }
-              >
-                <TabsPanel
-                  tabs={filteredTabs}
-                  loading={tabsApi.loading}
-                  groups={bookmarksApi.groups}
-                  groupDotById={groupDotById}
-                  width={tabsWidth}
-                  onToggleWidth={toggleTabsWidth}
-                  onActivate={tabsApi.activate}
-                  onClose={tabsApi.close}
-                  onPinTab={assignment.pinTab}
-                />
-              </div>
-            </>
+            <FavoritesPanel
+              items={filteredFavoriteItems}
+              groups={filteredGroups}
+              allGroups={bookmarksApi.groups}
+              groupDotById={groupDotById}
+              favoritesRootId={bookmarksApi.favoritesRootId}
+              groupWidths={groupWidths}
+              groupColors={groupColors}
+              autoEditId={assignment.autoEditId}
+              onAutoEditDone={assignment.clearAutoEdit}
+              onRenameBookmark={bookmarksApi.renameBookmark}
+              onRemoveBookmark={handleRemoveBookmark}
+              onAssignBookmark={assignment.assignBookmark}
+              onRenameGroup={bookmarksApi.renameGroup}
+              onRemoveGroup={handleRemoveGroup}
+              onMoveGroup={bookmarksApi.moveGroup}
+              onCreateEmptyGroup={assignment.createEmptyGroup}
+              reorderEnabled={!filter.trim()}
+            />
           )}
         </main>
+          </div>
+        </div>
+      </div>
 
-        <DragOverlay dropAnimation={null}>
-          {activeTab ? (
-            <TabPreview tab={activeTab} />
-          ) : activeBookmark ? (
-            <BookmarkPreview bookmark={activeBookmark} />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-    </div>
+      <DragOverlay dropAnimation={null}>
+        {activeTab ? (
+          <TabRowPreview tab={activeTab} />
+        ) : activeBookmark ? (
+          <BookmarkPreview bookmark={activeBookmark} />
+        ) : null}
+      </DragOverlay>
+
+      <HistoryPanel
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        history={history}
+        onRestore={handleRestoreFromHistory}
+      />
+    </DndContext>
   );
 }

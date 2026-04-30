@@ -7,7 +7,7 @@
     'Segoe UI', system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 17px;
   line-height: 1.55;
-  color-scheme: light dark;
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -20,14 +20,9 @@ body {
 }
 
 body {
-  background: #f4f3fc;
-  color: #1d2138;
-  overflow-x: hidden;
-}
-
-html.dark body {
   background: #0a0b1a;
   color: #e8eaf4;
+  overflow-x: hidden;
 }
 
 /* Sélection */
@@ -59,12 +54,9 @@ html.dark body {
 
 /* Focus visible global, restauré pour accessibilité */
 :focus-visible {
-  outline: 3px solid rgba(139, 92, 246, 0.65);
+  outline: 3px solid rgba(196, 181, 253, 0.85);
   outline-offset: 2px;
   border-radius: inherit;
-}
-html.dark :focus-visible {
-  outline-color: rgba(196, 181, 253, 0.85);
 }
 /* On désactive l'outline sur les éléments qui ont déjà un ring tailwind */
 [class*='focus-visible:ring']:focus-visible,

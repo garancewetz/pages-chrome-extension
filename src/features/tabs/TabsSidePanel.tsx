@@ -1,62 +1,40 @@
-import { Columns2, Globe, RectangleHorizontal } from 'lucide-react';
-import type { Tab } from './useTabs';
-import { DraggableTab } from './DraggableTab';
-import { IconButton } from '../../components/ui/IconButton';
+import { Globe } from 'lucide-react';
+import { DraggableTabRow } from './TabRow';
 import { SectionHeader } from '../../components/ui/SectionHeader';
-import type { BlockWidth } from '../../lib/widths';
 import type { AssignTarget, Group } from '../favorites/useBookmarks';
+import type { Tab } from './useTabs';
 
-type TabsPanelProps = {
+type Props = {
   tabs: Tab[];
   loading: boolean;
   groups: Group[];
   groupDotById: Record<string, string>;
-  width: BlockWidth;
-  onToggleWidth: () => void;
   onActivate: (t: Tab) => void;
   onClose: (t: Tab) => void;
   onPinTab: (tab: Tab, target: AssignTarget) => void;
 };
 
-export function TabsPanel({
+export function TabsSidePanel({
   tabs,
   loading,
   groups,
   groupDotById,
-  width,
-  onToggleWidth,
   onActivate,
   onClose,
   onPinTab,
-}: TabsPanelProps) {
-  const ToggleIcon = width === 'full' ? RectangleHorizontal : Columns2;
-  const toggleLabel =
-    width === 'full'
-      ? 'Mettre les onglets ouverts sur une demi-ligne'
-      : 'Mettre les onglets ouverts sur une ligne complète';
-
+}: Props) {
   return (
-    <section
-      className="flex flex-col gap-3"
-      aria-labelledby="tabs-h"
+    <aside
+      aria-labelledby="tabs-side-h"
+      className="sticky top-0 flex h-screen w-64 shrink-0 flex-col gap-3 border-r-2 border-ink-200 bg-white/40 px-3 py-4 backdrop-blur-sm dark:border-ink-700/70 dark:bg-ink-900/50"
     >
       <SectionHeader
-        id="tabs-h"
+        id="tabs-side-h"
         icon={Globe}
         title="Onglets ouverts"
         count={tabs.length}
         accent="sky"
-        actions={
-          <IconButton
-            variant="square"
-            label={toggleLabel}
-            aria-pressed={width === 'half'}
-            onClick={onToggleWidth}
-            icon={<ToggleIcon size={16} aria-hidden />}
-          />
-        }
       />
-
 
       {loading ? (
         <p className="text-base text-ink-600 dark:text-ink-200">Chargement…</p>
@@ -65,9 +43,9 @@ export function TabsPanel({
           Aucun onglet ne correspond.
         </p>
       ) : (
-        <ul className="relative grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2.5">
+        <ul className="-mr-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
           {tabs.map((tab) => (
-            <DraggableTab
+            <DraggableTabRow
               key={tab.id}
               tab={tab}
               groups={groups}
@@ -79,6 +57,6 @@ export function TabsPanel({
           ))}
         </ul>
       )}
-    </section>
+    </aside>
   );
 }

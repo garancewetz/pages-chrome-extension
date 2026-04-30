@@ -134,8 +134,9 @@ export function TileActionsMenu({
   const runAction = (item: Extract<TileActionsItem, { kind: 'action' }>) => {
     // Tant qu'un flash de succès est en cours, on ignore les autres clics.
     if (flashKey) return;
-    // Pour les actions destructrices (suppression), on exécute tout de suite et
-    // on ferme — l'utilisateur peut annuler via le toast.
+    // Pour les actions destructrices, on exécute tout de suite et on ferme :
+    // c'est l'action elle-même qui décide (toast d'annulation pour un favori,
+    // boîte de confirmation préalable pour un groupe).
     if (item.danger) {
       item.onSelect();
       setOpen(false);

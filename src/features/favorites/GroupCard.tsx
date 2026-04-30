@@ -205,7 +205,7 @@ export function GroupCard({
       >
         <ul
           ref={setNodeRef}
-          className={`grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 rounded-lg border-2 p-2 transition-colors ${dropClass}`}
+          className={`grid ${width === 'half' ? 'grid-cols-[repeat(auto-fill,minmax(6rem,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))]'} gap-2 rounded-lg border-2 p-2 transition-colors ${dropClass}`}
           aria-label={`Favoris de ${group.name}`}
         >
           {group.items.length === 0 ? (
