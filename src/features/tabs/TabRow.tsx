@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { FolderPlus, Globe, Star, X } from 'lucide-react';
 import { GroupDot } from '../../components/ui/GroupDot';
@@ -43,8 +43,22 @@ const closeBtn =
   'inline-grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink-500 transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-200';
 
 function TabFavicon({ tab, size = 24 }: { tab: Tab; size?: number }) {
+  const primary = tab.favIconUrl ?? null;
   const fallback = getFavicon(tab.url) ?? null;
-  const [src, setSrc] = useState<string | null>(tab.favIconUrl ?? fallback);
+  const [failedPrimary, setFailedPrimary] = useState(false);
+  const [failedFallback, setFailedFallback] = useState(false);
+
+  useEffect(() => {
+    setFailedPrimary(false);
+    setFailedFallback(false);
+  }, [primary, fallback]);
+
+  const src =
+    !failedPrimary && primary
+      ? primary
+      : !failedFallback
+        ? fallback
+        : null;
 
   if (!src)
     return (
@@ -57,7 +71,10 @@ function TabFavicon({ tab, size = 24 }: { tab: Tab; size?: number }) {
       alt=""
       className="shrink-0 rounded-md"
       style={{ height: size, width: size }}
-      onError={() => setSrc(src === fallback ? null : fallback)}
+      onError={() => {
+        if (src === primary) setFailedPrimary(true);
+        else setFailedFallback(true);
+      }}
     />
   );
 }
