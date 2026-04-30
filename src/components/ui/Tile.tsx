@@ -9,10 +9,10 @@ import { getHostname } from '../../lib/url';
 // Visuels complets : taille, bord, fond, hover. Le slot Tile s'occupe juste de
 // la position absolue et de la visibilité au survol.
 export const tileCornerInner =
-  'grid h-9 w-9 place-items-center rounded-md border-2 border-ink-200 bg-white text-ink-600 shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:border-ink-700 dark:bg-ink-700 dark:text-ink-100';
+  'grid h-9 w-9 place-items-center rounded-md bg-white/70 text-ink-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:bg-white/5 dark:text-ink-400';
 
 const tileShellBase =
-  'group/tile relative aspect-square overflow-hidden rounded-2xl border-2 border-ink-200 bg-white shadow-[0_2px_6px_-3px_rgba(67,56,135,0.1)] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-violet-400 hover:shadow-[0_10px_28px_-14px_rgba(139,92,246,0.55)] dark:border-ink-700/70 dark:bg-ink-800/70 dark:shadow-none dark:hover:border-violet-300 dark:hover:shadow-[0_10px_28px_-14px_rgba(139,92,246,0.6)]';
+  'group/tile relative aspect-square overflow-hidden rounded-xl border-2 border-ink-200 bg-white shadow-[0_2px_6px_-3px_rgba(67,56,135,0.1)] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-violet-400 hover:shadow-[0_10px_28px_-14px_rgba(139,92,246,0.55)] dark:border-ink-700/70 dark:bg-ink-800/70 dark:shadow-none dark:hover:border-violet-300 dark:hover:shadow-[0_10px_28px_-14px_rgba(139,92,246,0.6)]';
 
 const slotBase = 'absolute z-10 inline-flex';
 
@@ -56,15 +56,15 @@ export const Tile = forwardRef<HTMLLIElement, TileProps>(function Tile(
           aria-label={activateLabel}
           {...dragAttributes}
           {...dragListeners}
-          className="absolute inset-0 z-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          className="absolute inset-0 z-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         />
       ) : null}
       {children}
       {topLeft ? (
-        <span className={`${slotBase} left-1.5 top-1.5`}>{topLeft}</span>
+        <span className={`${slotBase} left-1 top-1`}>{topLeft}</span>
       ) : null}
       {topRight ? (
-        <span className={`${slotBase} right-1.5 top-1.5`}>{topRight}</span>
+        <span className={`${slotBase} right-1 top-1`}>{topRight}</span>
       ) : null}
     </li>
   );
@@ -77,7 +77,7 @@ type TilePreviewProps = {
 export function TilePreview({ children }: TilePreviewProps) {
   return (
     <div
-      className={`${tileShellBase} flex aspect-square w-28 min-w-0 flex-col items-center justify-center gap-1.5 p-2 text-center shadow-[0_18px_45px_-18px_rgba(15,23,42,0.45)]`}
+      className={`${tileShellBase} flex aspect-square w-28 min-w-0 flex-col items-center justify-center gap-1 p-2 text-center shadow-[0_18px_45px_-18px_rgba(15,23,42,0.45)]`}
     >
       {children}
     </div>
@@ -92,12 +92,12 @@ type TileBodyProps = {
 
 export function TileBody({ favicon, title, url }: TileBodyProps) {
   return (
-    <div className="pointer-events-none relative z-[1] flex h-full w-full min-w-0 flex-col items-center justify-center gap-1.5 p-2 text-center">
+    <div className="pointer-events-none relative z-[1] flex h-full w-full min-w-0 flex-col items-center justify-center gap-1 p-2 text-center">
       {favicon}
       {title}
       <span
         aria-hidden
-        className="w-full truncate text-xs text-ink-600 dark:text-ink-300"
+        className="w-full truncate text-xs leading-tight text-ink-600 dark:text-ink-300"
       >
         {getHostname(url)}
       </span>

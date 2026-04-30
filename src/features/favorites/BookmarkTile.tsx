@@ -36,7 +36,7 @@ function openBookmark(url: string): void {
   }
 }
 
-function Favicon({ url, fallbackSize = 24 }: { url: string; fallbackSize?: number }) {
+function Favicon({ url, fallbackSize = 22 }: { url: string; fallbackSize?: number }) {
   const favicon = getFavicon(url);
   const [failed, setFailed] = useState(false);
   if (favicon && !failed) {
@@ -46,14 +46,14 @@ function Favicon({ url, fallbackSize = 24 }: { url: string; fallbackSize?: numbe
         alt=""
         loading="lazy"
         onError={() => setFailed(true)}
-        className="h-8 w-8 rounded-md"
+        className="h-7 w-7 shrink-0 rounded-md"
       />
     );
   }
   return (
     <BookmarkIcon
       size={fallbackSize}
-      className="text-ink-400 dark:text-ink-500"
+      className="shrink-0 text-ink-400 dark:text-ink-500"
       aria-hidden
     />
   );
@@ -136,7 +136,7 @@ export function BookmarkTile({
       className="pointer-events-auto w-full min-w-0 rounded-md border border-violet-400/60 bg-white/90 px-1.5 py-0.5 text-center text-base font-semibold leading-snug text-ink-900 shadow-inner focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:bg-ink-800/90 dark:text-ink-50"
     />
   ) : (
-    <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-base font-semibold leading-snug text-ink-800 dark:text-ink-100">
+    <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-base font-semibold leading-tight text-ink-800 dark:text-ink-100">
       {bookmark.title}
     </span>
   );
@@ -228,7 +228,7 @@ export function BookmarkPreview({ bookmark }: { bookmark: Bookmark }) {
       <TileBody
         favicon={<Favicon url={bookmark.url} />}
         title={
-          <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-base font-semibold leading-snug text-ink-800 dark:text-ink-100">
+          <span className="line-clamp-2 w-full [overflow-wrap:anywhere] text-base font-semibold leading-tight text-ink-800 dark:text-ink-100">
             {bookmark.title}
           </span>
         }

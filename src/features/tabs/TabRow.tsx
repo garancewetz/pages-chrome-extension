@@ -33,8 +33,11 @@ function pinnedAccent(
   return groupColor ?? '#d6dae8';
 }
 
+// Bordure gauche toujours à 4 px (transparente quand non épinglée) pour
+// garantir l'alignement vertical du contenu entre les lignes épinglées et
+// non épinglées.
 const rowShellBase =
-  'group/row relative flex items-center gap-2.5 rounded-xl border-2 border-transparent bg-white/70 px-2.5 py-2.5 transition-[border-color,background-color,box-shadow] duration-150 ease-out hover:border-violet-300 hover:bg-white hover:shadow-[0_6px_20px_-12px_rgba(139,92,246,0.5)] dark:bg-ink-800/60 dark:hover:border-violet-300/40 dark:hover:bg-ink-800';
+  'group/row relative flex items-center gap-2.5 rounded-xl border-y-2 border-r-2 border-l-4 border-transparent bg-white/70 px-2 py-2 transition-[border-color,background-color,box-shadow] duration-150 ease-out hover:border-violet-300 hover:bg-white hover:shadow-[0_6px_20px_-12px_rgba(139,92,246,0.5)] dark:bg-ink-800/60 dark:hover:border-violet-300/40 dark:hover:bg-ink-800';
 
 const closeBtn =
   'inline-grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink-500 transition-colors hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 dark:text-ink-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-200';
@@ -118,7 +121,7 @@ export function DraggableTabRow({
 
   const accent = pinnedAccent(pinnedTo, pinnedColor);
   const liStyle: CSSProperties = accent
-    ? { ...style, borderLeftWidth: '4px', borderLeftColor: accent }
+    ? { ...style, borderLeftColor: accent }
     : style;
 
   return (
@@ -166,7 +169,7 @@ export function DraggableTabRow({
 
 export function TabRowPreview({ tab }: { tab: Tab }) {
   return (
-    <div className="flex w-64 items-center gap-2.5 rounded-xl border-2 border-violet-300 bg-white px-2.5 py-2.5 shadow-[0_18px_45px_-18px_rgba(15,23,42,0.45)] dark:border-violet-300/40 dark:bg-ink-800">
+    <div className="flex w-64 items-center gap-2.5 rounded-xl border-2 border-violet-300 bg-white px-2 py-2 shadow-[0_18px_45px_-18px_rgba(15,23,42,0.45)] dark:border-violet-300/40 dark:bg-ink-800">
       <TabFavicon tab={tab} />
       <div className="flex min-w-0 flex-col">
         <span className="line-clamp-2 [overflow-wrap:anywhere] text-sm font-semibold leading-snug text-ink-800 dark:text-ink-100">
