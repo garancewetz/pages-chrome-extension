@@ -44,6 +44,9 @@ import {
 } from './features/favorites/useAssignment';
 import { useBlockWidthMap } from './lib/widths';
 import { getColor, useGroupColorMap } from './lib/groupColors';
+import { normalizeUrl } from './lib/url';
+
+export type PinnedRef = { groupId: string | null };
 
 const TAB_DRAG_PREFIX = 'tab:';
 
@@ -102,6 +105,22 @@ function AppContent() {
     });
     return map;
   }, [bookmarksApi.groups, groupColors]);
+
+  const pinnedByUrl = useMemo<Map<string, PinnedRef>>(() => {
+    const map = new Map<string, PinnedRef>();
+    // Si la même URL est bookmarkée à la racine ET dans un groupe, on
+    // privilégie la racine : on remplit donc les groupes en premier puis
+    // les favoris racine, qui écrasent.
+    bookmarksApi.groups.forEach((g) => {
+      g.items.forEach((b) => {
+        map.set(normalizeUrl(b.url), { groupId: g.id });
+      });
+    });
+    bookmarksApi.favoriteItems.forEach((b) => {
+      map.set(normalizeUrl(b.url), { groupId: null });
+    });
+    return map;
+  }, [bookmarksApi.favoriteItems, bookmarksApi.groups]);
 
   const filteredGroups = useMemo<Group[]>(() => {
     if (!filter.trim()) return bookmarksApi.groups;
@@ -247,6 +266,7 @@ function AppContent() {
           loading={tabsApi.loading}
           groups={bookmarksApi.groups}
           groupDotById={groupDotById}
+          pinnedByUrl={pinnedByUrl}
           onActivate={tabsApi.activate}
           onClose={tabsApi.close}
           onPinTab={assignment.pinTab}

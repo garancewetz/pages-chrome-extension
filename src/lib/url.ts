@@ -8,6 +8,21 @@ export function getHostname(url: string): string {
   }
 }
 
+// Clé de comparaison stable entre une URL d'onglet et une URL de favori :
+// retire le fragment et un éventuel slash terminal. Le constructeur URL
+// normalise déjà le hostname en minuscules.
+export function normalizeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    u.hash = '';
+    let s = u.toString();
+    if (s.endsWith('/') && !s.endsWith('//')) s = s.slice(0, -1);
+    return s;
+  } catch {
+    return url;
+  }
+}
+
 export function getFavicon(pageUrl: string): string | undefined {
   let hostname: string;
   try {

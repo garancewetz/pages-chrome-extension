@@ -1,6 +1,8 @@
 import { Globe } from 'lucide-react';
 import { DraggableTabRow } from './TabRow';
 import { SectionHeader } from '../../components/ui/SectionHeader';
+import { normalizeUrl } from '../../lib/url';
+import type { PinnedRef } from '../../App';
 import type { AssignTarget, Group } from '../favorites/useBookmarks';
 import type { Tab } from './useTabs';
 
@@ -9,6 +11,7 @@ type Props = {
   loading: boolean;
   groups: Group[];
   groupDotById: Record<string, string>;
+  pinnedByUrl: Map<string, PinnedRef>;
   onActivate: (t: Tab) => void;
   onClose: (t: Tab) => void;
   onPinTab: (tab: Tab, target: AssignTarget) => void;
@@ -19,6 +22,7 @@ export function TabsSidePanel({
   loading,
   groups,
   groupDotById,
+  pinnedByUrl,
   onActivate,
   onClose,
   onPinTab,
@@ -43,13 +47,14 @@ export function TabsSidePanel({
           Aucun onglet ne correspond.
         </p>
       ) : (
-        <ul className="-mr-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
+        <ul className="-mr-1 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
           {tabs.map((tab) => (
             <DraggableTabRow
               key={tab.id}
               tab={tab}
               groups={groups}
               groupDotById={groupDotById}
+              pinnedTo={pinnedByUrl.get(normalizeUrl(tab.url)) ?? null}
               onActivate={onActivate}
               onClose={onClose}
               onPin={onPinTab}
