@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
-  ChevronDown,
-  ChevronUp,
+  ArrowDownToLine,
+  ArrowUpToLine,
   Columns2,
+  GripVertical,
   Pencil,
   RectangleHorizontal,
   Trash2,
 } from 'lucide-react';
 import { BookmarkTile } from './BookmarkTile';
 import { GroupColorPicker } from './GroupColorPicker';
+import { GroupDot } from '../../components/ui/GroupDot';
 import { EmptyDropZone } from '../../components/ui/EmptyDropZone';
-import { IconButton } from '../../components/ui/IconButton';
 import {
   TileActionsMenu,
   type TileActionsItem,
@@ -36,9 +38,11 @@ type Props = {
   onAssignBookmark: (id: string, target: AssignTarget) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
-  onMoveGroup?: (id: string, direction: 'up' | 'down') => void;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
+  /** Position dans la liste affichée (UI). */
+  uiIndex: number;
+  totalGroups: number;
+  /** Place le groupe à un index UI absolu. Indéfini si la réorganisation est désactivée (filtre actif). */
+  onMoveGroupTo?: (id: string, targetIndex: number) => void;
   colorId: GroupColorId;
   onChangeColor: (id: string, color: GroupColorId) => void;
 };
@@ -57,9 +61,9 @@ export function GroupCard({
   onAssignBookmark,
   onRenameGroup,
   onRemoveGroup,
-  onMoveGroup,
-  canMoveUp,
-  canMoveDown,
+  uiIndex,
+  totalGroups,
+  onMoveGroupTo,
   colorId,
   onChangeColor,
 }: Props) {
@@ -82,7 +86,31 @@ export function GroupCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoEdit]);
 
-  const { setNodeRef, isOver } = useDroppable({
+  const reorderEnabled = Boolean(onMoveGroupTo);
+  const canMoveFirst = reorderEnabled && uiIndex > 0;
+  const canMoveLast = reorderEnabled && uiIndex < totalGroups - 1;
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: group.id,
+    data: { type: 'group-card', group, groupId: group.id },
+    disabled: !reorderEnabled,
+  });
+
+  const sortableStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
+    borderLeftColor: color.dot,
+  };
+
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `group:${group.id}`,
     data: { type: 'group', groupId: group.id },
   });
@@ -110,6 +138,71 @@ export function GroupCard({
   const toggleLabel =
     width === 'full' ? 'Mettre sur une demi-ligne' : 'Mettre en pleine largeur';
 
+  // « Avant other » = atterrir au slot UI de other ; si on remonte
+  // (otherUi < uiIndex), on prend exactement otherUi ; si on descend, on
+  // tombe juste avant other, donc otherUi - 1. On exclut les cibles qui
+  // équivaudraient à ne rien faire (groupe déjà adjacent).
+  const beforeTargets = allGroups
+    .map((other, otherUi) => ({ other, otherUi }))
+    .filter(({ other }) => other.id !== group.id)
+    .map(({ other, otherUi }) => ({
+      other,
+      target: otherUi < uiIndex ? otherUi : otherUi - 1,
+    }))
+    .filter(({ target }) => target !== uiIndex);
+
+  const hasReorderItems =
+    reorderEnabled &&
+    (canMoveFirst || canMoveLast || beforeTargets.length > 0);
+
+  const reorderItems: TileActionsItem[] = hasReorderItems
+    ? [
+        { kind: 'divider', key: 'd-reorder' },
+        { kind: 'group-header', key: 'h-reorder', label: 'Réorganiser' },
+        ...(canMoveFirst
+          ? [
+              {
+                kind: 'action' as const,
+                key: 'move-first',
+                label: 'Mettre en premier',
+                icon: <ArrowUpToLine size={16} aria-hidden />,
+                onSelect: () => onMoveGroupTo?.(group.id, 0),
+                successLabel: 'Déplacé !',
+              },
+            ]
+          : []),
+        ...(canMoveLast
+          ? [
+              {
+                kind: 'action' as const,
+                key: 'move-last',
+                label: 'Mettre en dernier',
+                icon: <ArrowDownToLine size={16} aria-hidden />,
+                onSelect: () => onMoveGroupTo?.(group.id, totalGroups - 1),
+                successLabel: 'Déplacé !',
+              },
+            ]
+          : []),
+        ...(beforeTargets.length > 0
+          ? [
+              {
+                kind: 'group-header' as const,
+                key: 'h-before',
+                label: 'Placer juste avant…',
+              },
+              ...beforeTargets.map<TileActionsItem>(({ other, target }) => ({
+                kind: 'action',
+                key: `move-before-${other.id}`,
+                label: other.name,
+                icon: <GroupDot color={groupDotById[other.id] ?? '#94a3b8'} />,
+                onSelect: () => onMoveGroupTo?.(group.id, target),
+                successLabel: 'Déplacé !',
+              })),
+            ]
+          : []),
+      ]
+    : [];
+
   const menuItems: TileActionsItem[] = [
     {
       kind: 'action',
@@ -125,7 +218,8 @@ export function GroupCard({
       icon: <ToggleIcon size={16} aria-hidden />,
       onSelect: onToggleWidth,
     },
-    { kind: 'divider', key: 'd1' },
+    ...reorderItems,
+    { kind: 'divider', key: 'd-end' },
     {
       kind: 'action',
       key: 'remove',
@@ -138,12 +232,24 @@ export function GroupCard({
 
   return (
     <section
+      ref={setSortableRef}
+      style={sortableStyle}
       className="group/card relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-l-4 border-ink-200/80 bg-white/80 p-3 transition-shadow duration-200 hover:shadow-[0_12px_32px_-18px_rgba(15,23,42,0.25)] dark:border-ink-700/70 dark:bg-ink-800/60"
-      style={{ borderLeftColor: color.dot }}
       aria-label={`Groupe ${group.name}`}
     >
       <header className="flex items-center justify-between gap-2">
         <div className="group/title flex min-w-0 flex-1 items-center gap-2">
+          {reorderEnabled ? (
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              aria-label={`Déplacer le groupe ${group.name}`}
+              className="inline-grid h-9 w-9 shrink-0 cursor-grab touch-none place-items-center rounded-md text-ink-400 transition-colors hover:bg-ink-100/70 hover:text-ink-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 active:cursor-grabbing dark:text-ink-300 dark:hover:bg-white/10 dark:hover:text-ink-50"
+            >
+              <GripVertical size={20} aria-hidden />
+            </button>
+          ) : null}
           <GroupColorPicker
             current={colorId}
             groupName={group.name}
@@ -173,24 +279,6 @@ export function GroupCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          {onMoveGroup ? (
-            <>
-              <IconButton
-                variant="bare"
-                label={`Monter le groupe ${group.name}`}
-                onClick={() => onMoveGroup(group.id, 'up')}
-                disabled={!canMoveUp}
-                icon={<ChevronUp size={16} aria-hidden />}
-              />
-              <IconButton
-                variant="bare"
-                label={`Descendre le groupe ${group.name}`}
-                onClick={() => onMoveGroup(group.id, 'down')}
-                disabled={!canMoveDown}
-                icon={<ChevronDown size={16} aria-hidden />}
-              />
-            </>
-          ) : null}
           <TileActionsMenu
             items={menuItems}
             triggerLabel={`Actions du groupe ${group.name}`}
@@ -204,7 +292,7 @@ export function GroupCard({
         strategy={rectSortingStrategy}
       >
         <ul
-          ref={setNodeRef}
+          ref={setDroppableRef}
           className={`grid ${width === 'half' ? 'grid-cols-[repeat(auto-fill,minmax(6rem,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))]'} gap-2 rounded-lg border-2 p-2 transition-colors ${dropClass}`}
           aria-label={`Favoris de ${group.name}`}
         >
@@ -229,6 +317,35 @@ export function GroupCard({
           )}
         </ul>
       </SortableContext>
+    </section>
+  );
+}
+
+export function GroupCardPreview({
+  group,
+  colorId,
+}: {
+  group: Group;
+  colorId: GroupColorId;
+}) {
+  const color = getColor(colorId);
+  return (
+    <section
+      className="relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-l-4 border-ink-200/80 bg-white/95 p-3 shadow-[0_18px_45px_-18px_rgba(15,23,42,0.45)] dark:border-ink-700/70 dark:bg-ink-800/95"
+      style={{ minWidth: 280, borderLeftColor: color.dot }}
+      aria-hidden
+    >
+      <header className="flex items-center gap-2">
+        <span className="inline-grid h-9 w-9 place-items-center rounded-md text-ink-400 dark:text-ink-300">
+          <GripVertical size={20} aria-hidden />
+        </span>
+        <span className="truncate text-base font-semibold text-ink-800 dark:text-ink-100">
+          {group.name}
+        </span>
+        <span className="ml-auto text-base font-medium text-ink-600 dark:text-ink-200">
+          {group.items.length}
+        </span>
+      </header>
     </section>
   );
 }

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 280" width="440" height="280">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1625"/>
+      <stop offset="100%" stop-color="#0f0d18"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="440" height="280" fill="url(#bg)"/>
+
+  <g transform="translate(36, 90)">
+    <rect x="0" y="0" width="50" height="100" rx="12" fill="#7c3aed"/>
+    <rect x="62" y="0" width="36" height="46" rx="9" fill="#e11d48"/>
+    <rect x="62" y="54" width="36" height="46" rx="9" fill="#0284c7"/>
+  </g>
+
+  <g transform="translate(170, 110)">
+    <text x="0" y="0" fill="#ffffff" font-family="-apple-system, system-ui, sans-serif" font-size="40" font-weight="700" letter-spacing="-1">Mes Pages</text>
+    <text x="0" y="38" fill="#a5a3b3" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="400">Vos favoris, simplement</text>
+    <text x="0" y="62" fill="#a5a3b3" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="400">rangés.</text>
+  </g>
+</svg>

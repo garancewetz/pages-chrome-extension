@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { History } from 'lucide-react';
-import { GoogleSearch } from './components/GoogleSearch';
+import { SearchBox } from './components/SearchBox';
 import { Logo } from './components/ui/Logo';
 import { SearchBar } from './components/ui/SearchBar';
 import {
@@ -21,6 +21,7 @@ import {
   useConfirm,
 } from './components/ui/ConfirmDialog';
 import { FavoritesPanel } from './features/favorites/FavoritesPanel';
+import { GroupCardPreview } from './features/favorites/GroupCard';
 import { TabsSidePanel } from './features/tabs/TabsSidePanel';
 import { TabRowPreview } from './features/tabs/TabRow';
 import { BookmarkPreview } from './features/favorites/BookmarkTile';
@@ -140,7 +141,27 @@ function AppContent() {
     }),
   );
 
-  const collisionDetection: CollisionDetection = (args) => closestCenter(args);
+  // Le sortable du groupe (section entière) et le drop-zone interne d'un
+  // groupe (grille de favoris) se chevauchent : pour éviter qu'un favori glissé
+  // ne « tombe » sur la section au lieu de la grille, on filtre les cibles
+  // selon le type de source.
+  const collisionDetection: CollisionDetection = (args) => {
+    const activeType = args.active.data.current?.type;
+    if (activeType === 'group-card') {
+      return closestCenter({
+        ...args,
+        droppableContainers: args.droppableContainers.filter(
+          (c) => c.data.current?.type === 'group-card',
+        ),
+      });
+    }
+    return closestCenter({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (c) => c.data.current?.type !== 'group-card',
+      ),
+    });
+  };
 
   const handleDragStart = (event: DragStartEvent): void => {
     setActiveId(String(event.active.id));
@@ -153,8 +174,23 @@ function AppContent() {
     const { active, over } = event;
     if (!over) return;
 
-    const source = active.data.current as DragSource | undefined;
-    if (!source) return;
+    const sourceData = active.data.current as
+      | DragSource
+      | { type: 'group-card'; group: Group; groupId: string }
+      | undefined;
+    if (!sourceData) return;
+
+    if (sourceData.type === 'group-card') {
+      if (active.id === over.id) return;
+      const targetIndex = bookmarksApi.groups.findIndex(
+        (g) => g.id === over.id,
+      );
+      if (targetIndex === -1) return;
+      void bookmarksApi.moveGroupTo(String(active.id), targetIndex);
+      return;
+    }
+
+    const source = sourceData as DragSource;
     const target = over.data.current as DropTarget | undefined;
 
     if (target?.type === 'placeholder') {
@@ -252,6 +288,18 @@ function AppContent() {
     return findBookmark(bookmarksApi, activeId) ?? null;
   }, [activeId, bookmarksApi]);
 
+  const activeGroup = useMemo<Group | null>(() => {
+    if (!activeId) return null;
+    if (activeId.startsWith(TAB_DRAG_PREFIX)) return null;
+    return bookmarksApi.groups.find((g) => g.id === activeId) ?? null;
+  }, [activeId, bookmarksApi.groups]);
+
+  const activeGroupColorId = useMemo(() => {
+    if (!activeGroup) return null;
+    const idx = bookmarksApi.groups.findIndex((g) => g.id === activeGroup.id);
+    return groupColors.getColorId(activeGroup.id, Math.max(0, idx));
+  }, [activeGroup, bookmarksApi.groups, groupColors]);
+
   return (
     <DndContext
       sensors={sensors}
@@ -300,7 +348,7 @@ function AppContent() {
           </div>
         </header>
 
-        <GoogleSearch />
+        <SearchBox />
 
         <main className="flex flex-col gap-8">
           {!bookmarksApi.loaded ? (
@@ -323,7 +371,7 @@ function AppContent() {
               onAssignBookmark={assignment.assignBookmark}
               onRenameGroup={bookmarksApi.renameGroup}
               onRemoveGroup={handleRemoveGroup}
-              onMoveGroup={bookmarksApi.moveGroup}
+              onMoveGroupTo={bookmarksApi.moveGroupTo}
               onCreateEmptyGroup={assignment.createEmptyGroup}
               reorderEnabled={!filter.trim()}
             />
@@ -336,6 +384,8 @@ function AppContent() {
       <DragOverlay dropAnimation={null}>
         {activeTab ? (
           <TabRowPreview tab={activeTab} />
+        ) : activeGroup && activeGroupColorId ? (
+          <GroupCardPreview group={activeGroup} colorId={activeGroupColorId} />
         ) : activeBookmark ? (
           <BookmarkPreview bookmark={activeBookmark} />
         ) : null}

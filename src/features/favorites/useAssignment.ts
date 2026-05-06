@@ -16,6 +16,7 @@ export type DragSource =
 export type DropTarget =
   | { type: 'favorites-root' }
   | { type: 'group'; groupId: string }
+  | { type: 'group-card'; groupId: string; group: Group }
   | { type: 'bookmark'; bookmark: Bookmark }
   | { type: 'placeholder' };
 
@@ -46,7 +47,7 @@ export function resolveDropPosition(
   if (target.type === 'favorites-root') {
     return { parentId: api.favoritesRootId, index: rootInsertIndex(api) };
   }
-  if (target.type === 'group') {
+  if (target.type === 'group' || target.type === 'group-card') {
     const group = findGroup(api, target.groupId);
     return { parentId: target.groupId, index: group?.items.length ?? 0 };
   }

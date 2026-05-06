@@ -29,7 +29,7 @@ type Props = {
   onAssignBookmark: (id: string, target: AssignTarget) => void;
   onRenameGroup: (id: string, name: string) => void;
   onRemoveGroup: (id: string) => void;
-  onMoveGroup: (id: string, direction: 'up' | 'down') => void;
+  onMoveGroupTo: (id: string, targetIndex: number) => void;
   onCreateEmptyGroup: () => void;
   reorderEnabled: boolean;
 };
@@ -49,7 +49,7 @@ export function FavoritesPanel({
   onAssignBookmark,
   onRenameGroup,
   onRemoveGroup,
-  onMoveGroup,
+  onMoveGroupTo,
   onCreateEmptyGroup,
   reorderEnabled,
 }: Props) {
@@ -113,39 +113,44 @@ export function FavoritesPanel({
 
       <div className="relative flex flex-col gap-3">
         <SubsectionTitle>Groupes ({groups.length})</SubsectionTitle>
-        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-          {groups.map((g, i) => {
-            const w = groupWidths.getWidth(g.id);
-            return (
-              <div
-                key={g.id}
-                className={w === 'full' ? 'md:col-span-2' : 'md:col-span-1'}
-              >
-                <GroupCard
-                  group={g}
-                  width={w}
-                  allGroups={allGroups}
-                  groupDotById={groupDotById}
-                  favoritesRootId={favoritesRootId}
-                  onToggleWidth={() => groupWidths.toggle(g.id)}
-                  autoEdit={autoEditId === g.id}
-                  onAutoEditDone={onAutoEditDone}
-                  onRenameBookmark={onRenameBookmark}
-                  onRemoveBookmark={onRemoveBookmark}
-                  onAssignBookmark={onAssignBookmark}
-                  onRenameGroup={onRenameGroup}
-                  onRemoveGroup={onRemoveGroup}
-                  onMoveGroup={reorderEnabled ? onMoveGroup : undefined}
-                  canMoveUp={reorderEnabled && i > 0}
-                  canMoveDown={reorderEnabled && i < groups.length - 1}
-                  colorId={groupColors.getColorId(g.id, i)}
-                  onChangeColor={groupColors.setColorId}
-                />
-              </div>
-            );
-          })}
-          <GroupPlaceholder onCreate={onCreateEmptyGroup} />
-        </div>
+        <SortableContext
+          items={groups.map((g) => g.id)}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+            {groups.map((g, i) => {
+              const w = groupWidths.getWidth(g.id);
+              return (
+                <div
+                  key={g.id}
+                  className={w === 'full' ? 'md:col-span-2' : 'md:col-span-1'}
+                >
+                  <GroupCard
+                    group={g}
+                    width={w}
+                    allGroups={allGroups}
+                    groupDotById={groupDotById}
+                    favoritesRootId={favoritesRootId}
+                    onToggleWidth={() => groupWidths.toggle(g.id)}
+                    autoEdit={autoEditId === g.id}
+                    onAutoEditDone={onAutoEditDone}
+                    onRenameBookmark={onRenameBookmark}
+                    onRemoveBookmark={onRemoveBookmark}
+                    onAssignBookmark={onAssignBookmark}
+                    onRenameGroup={onRenameGroup}
+                    onRemoveGroup={onRemoveGroup}
+                    uiIndex={i}
+                    totalGroups={groups.length}
+                    onMoveGroupTo={reorderEnabled ? onMoveGroupTo : undefined}
+                    colorId={groupColors.getColorId(g.id, i)}
+                    onChangeColor={groupColors.setColorId}
+                  />
+                </div>
+              );
+            })}
+            <GroupPlaceholder onCreate={onCreateEmptyGroup} />
+          </div>
+        </SortableContext>
       </div>
     </section>
   );
