@@ -1,8 +1,8 @@
-# Mes Pages — Contexte
+# Pages — Contexte
 
 ## Ce que fait l'extension
 
-**Mes Pages** remplace la page **Nouvel onglet** de Chrome par un tableau de bord en mosaïque qui regroupe deux sources d'information souvent éparpillées :
+**Pages** remplace la page **Nouvel onglet** de Chrome par un tableau de bord en mosaïque qui regroupe deux sources d'information souvent éparpillées :
 
 1. **Favoris** — l'arbre des bookmarks aplati, organisé en groupes colorés (un dossier Chrome = un groupe).
 2. **Onglets ouverts** — tous les onglets de toutes les fenêtres Chrome, en direct.

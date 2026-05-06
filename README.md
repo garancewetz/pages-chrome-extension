@@ -1,4 +1,4 @@
-# Mes Pages — Extension Chrome
+# Pages — Extension Chrome
 
 Une page d'accueil pour Chrome qui simplifie le numérique et aide à mettre de l'ordre dans ses pages. Tous vos favoris et vos onglets ouverts au même endroit, rangés visuellement, accessibles en un clic.
 

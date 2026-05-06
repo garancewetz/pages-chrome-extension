@@ -326,7 +326,7 @@ function AppContent() {
           <div className="flex items-center gap-2.5">
             <Logo size={26} />
             <h1 className="font-display text-xl font-bold tracking-tight text-violet-700 dark:text-violet-200">
-              Mes Pages
+              Pages
             </h1>
           </div>
           <div className="flex items-center gap-2.5 md:w-auto">

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Mes Pages",
+  "name": "Pages",
   "version": "1.0.0",
   "description": "Mes onglets et mes favoris réunis sur la page Nouvel onglet.",
   "chrome_url_overrides": {
