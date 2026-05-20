@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Pages",
-  "version": "1.0.0",
-  "description": "Mes onglets et mes favoris réunis sur la page Nouvel onglet.",
+  "name": "Mosaïque — Onglets & Favoris",
+  "version": "1.0.2",
+  "description": "Remplace le Nouvel onglet par une mosaïque visuelle de vos favoris et onglets ouverts. Simple, lisible, sans menus.",
+  "author": "Garance Wetzel",
+  "homepage_url": "https://github.com/garancewetz/pages-chrome-extension",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },

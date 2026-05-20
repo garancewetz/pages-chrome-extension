@@ -5,6 +5,7 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCenter,
+  pointerWithin,
   useSensor,
   useSensors,
   type CollisionDetection,
@@ -145,6 +146,12 @@ function AppContent() {
   // groupe (grille de favoris) se chevauchent : pour éviter qu'un favori glissé
   // ne « tombe » sur la section au lieu de la grille, on filtre les cibles
   // selon le type de source.
+  //
+  // Pour les drags d'onglet/favori, on privilégie `pointerWithin` (cible sous
+  // le curseur). `closestCenter` reposait sur le centre du rectangle glissé,
+  // qui — depuis la sidebar gauche — atterrissait souvent plus près du premier
+  // groupe que de la fine bande « Favoris directs ». Fallback closestCenter
+  // si le curseur n'est dans aucun droppable, pour les drops aux bords.
   const collisionDetection: CollisionDetection = (args) => {
     const activeType = args.active.data.current?.type;
     if (activeType === 'group-card') {
@@ -155,12 +162,15 @@ function AppContent() {
         ),
       });
     }
-    return closestCenter({
+    const filtered = {
       ...args,
       droppableContainers: args.droppableContainers.filter(
         (c) => c.data.current?.type !== 'group-card',
       ),
-    });
+    };
+    const pointerHits = pointerWithin(filtered);
+    if (pointerHits.length > 0) return pointerHits;
+    return closestCenter(filtered);
   };
 
   const handleDragStart = (event: DragStartEvent): void => {
@@ -326,7 +336,7 @@ function AppContent() {
           <div className="flex items-center gap-2.5">
             <Logo size={26} />
             <h1 className="font-display text-xl font-bold tracking-tight text-violet-700 dark:text-violet-200">
-              Pages
+              Mosaïque
             </h1>
           </div>
           <div className="flex items-center gap-2.5 md:w-auto">
